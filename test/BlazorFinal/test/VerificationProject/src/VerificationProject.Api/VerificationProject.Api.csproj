@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="BaseCore.Framework.Web" />
+    <ProjectReference Include="..\VerificationProject.Application\VerificationProject.Application.csproj" />
+    <ProjectReference Include="..\VerificationProject.Infrastructure\VerificationProject.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

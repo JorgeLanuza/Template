@@ -1,0 +1,41 @@
+@page "/user"
+
+<PageTitle>User Profile</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">User Profile</MudText>
+
+<MudPaper Class="pa-4 my-4" Elevation="2">
+    <MudForm Model="@user">
+        <MudText Typo="Typo.h6" GutterBottom="true">Personal Information</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="user.Username" Label="Username" Variant="Variant.Outlined" ReadOnly="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                 <MudTextField @bind-Value="user.Email" Label="Email" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12">
+                 <MudTextField @bind-Value="user.FullName" Label="Full Name" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" Class="d-flex justify-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save">Save Changes</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private UserModel user = new()
+    {
+        Username = "jorge_user",
+        FullName = "Jorge Senior Dev",
+        Email = "jorge@basecore.com"
+    };
+
+    public class UserModel
+    {
+        public string Username { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string Email { get; set; } = "";
+    }
+}

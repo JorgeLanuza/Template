@@ -1,0 +1,20 @@
+@page "/login"
+
+<PageTitle>Login</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center mud-width-full" Style="height: 70vh;">
+    <MudPaper Class="pa-8" Elevation="3" Width="400px">
+        <MudStack Spacing="4">
+            <div class="d-flex justify-center">
+                 <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Primary" />
+            </div>
+            <MudText Typo="Typo.h5" Align="Align.Center">Welcome Back</MudText>
+            
+            <MudTextField T="string" Label="Username" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person" />
+            <MudTextField T="string" Label="Password" InputType="InputType.Password" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Lock" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true" Href="/">Sign In</MudButton>
+            
+             <MudLink Href="#" Disabled="true" Align="Align.Center">Forgot password?</MudLink>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
