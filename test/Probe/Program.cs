@@ -1,31 +1,60 @@
-﻿using System;
-using System.Linq;
+﻿
+using System;
+using System.IO;
 using System.Reflection;
+using System.Linq;
 
-Console.WriteLine("START PROBE");
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine("START PROBE");
+        var nugetCache = @"c:\Users\jorge\source\repos\BaseCore.Framework\artifacts"; 
+        
+        var configAssembly = LoadAssembly(Path.Combine(nugetCache, "BaseCore.Framework.Configuration.1.0.0.nupkg"), "BaseCore.Framework.Configuration.dll");
 
-try { Assembly.Load("BaseCore.Framework.Web"); } catch {}
-try { Assembly.Load("BaseCore.Framework.Domain"); } catch {}
-try { Assembly.Load("BaseCore.Framework.Infrastructure"); } catch {}
-try { Assembly.Load("BaseCore.Framework.IdentityServer"); } catch {}
-try { Assembly.Load("BaseCore.Framework.Security.Identity"); } catch (Exception e) { Console.WriteLine("Load Security failed: " + e.Message); }
+        if (configAssembly != null)
+        {
+            Console.WriteLine("Searching for types implementing IBaseCoreApplicationSettings...");
+            var interfaceType = configAssembly.GetType("BaseCore.Framework.Configuration.Interfaces.IBaseCoreApplicationSettings");
+            
+            if (interfaceType != null)
+            {
+                Console.WriteLine($"Interface found: {interfaceType.FullName}");
+            }
 
-var asms = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName.Contains("BaseCore")).ToArray();
-
-foreach(var a in asms) {
-    if(!a.FullName.Contains("Security.Identity")) continue;
-    try {
-        var types = a.GetExportedTypes();
-        foreach(var t in types) {
-             if(t.Name.Contains("DependencyInjection")) {
-                 Console.WriteLine(" Type: " + t.FullName);
-                 foreach(var m in t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)) {
-                     Console.Write("  Method: " + m.Name + " Params: ");
-                     foreach(var p in m.GetParameters()) Console.Write(p.ParameterType.Name + " " + p.Name + ", ");
-                     Console.WriteLine();
+            Console.WriteLine("Listing all public exported types:");
+            foreach (var type in configAssembly.GetExportedTypes())
+            {
+                 Console.WriteLine($" - {type.FullName}");
+                 if (interfaceType != null && interfaceType.IsAssignableFrom(type) && type.IsClass)
+                 {
+                     Console.WriteLine($"   ^ IMPLEMENTS IBaseCoreApplicationSettings");
                  }
-             }
+            }
         }
-    } catch (Exception ex) { Console.WriteLine("Ex: " + ex.Message); }
+        Console.WriteLine("END PROBE");
+    }
+
+    static Assembly LoadAssembly(string nupkgPath, string dllName)
+    {
+        if (!File.Exists(nupkgPath)) { Console.WriteLine($"Nupkg not found: {nupkgPath}"); return null; }
+        
+        using (var archive = new System.IO.Compression.ZipArchive(File.OpenRead(nupkgPath)))
+        {
+            var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith($"lib/net10.0/{dllName}") || e.FullName.EndsWith($"lib/net8.0/{dllName}")); 
+             if (entry == null) entry = archive.Entries.FirstOrDefault(e => e.Name == dllName);
+
+            if (entry != null)
+            {
+                using (var stream = entry.Open())
+                using (var ms = new MemoryStream())
+                {
+                    stream.CopyTo(ms);
+                    return Assembly.Load(ms.ToArray());
+                }
+            }
+        }
+        return null;
+    }
 }
-Console.WriteLine("END PROBE");

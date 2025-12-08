@@ -1,9 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.0\contentFiles\any\net10.0\Configuration\BaseCore.ApplicationSettings.json" />
+    <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.0\contentFiles\any\net10.0\Configuration\NLog.config" />
+    <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.0\contentFiles\any\net10.0\Configuration\TrackerLoggerSettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Template.Application\Template.Application.csproj" />
     <ProjectReference Include="..\Template.Infrastructure\Template.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="basecore.config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Configuration\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="BaseCore.Framework.IdentityServer" />
@@ -17,7 +36,16 @@
     </PackageReference>
     <PackageReference Include="MudBlazor" />
     <PackageReference Include="BaseCore.Framework.Security.Identity" />
+    <PackageReference Include="BaseCore.Framework.Observability" />
+    <PackageReference Include="BaseCore.Framework.DependencyInjection" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
+    <PackageReference Include="NLog.Web.AspNetCore" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="Configuration\" />
   </ItemGroup>
 
   <PropertyGroup>

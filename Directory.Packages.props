@@ -23,6 +23,11 @@
     <PackageVersion Include="BaseCore.Framework.Web" Version="1.0.0" />
     <PackageVersion Include="BaseCore.Framework.IdentityServer" Version="1.0.0" />
     <PackageVersion Include="BaseCore.Framework.Security.Identity" Version="1.0.0" />
+    <PackageVersion Include="BaseCore.Framework.Observability" Version="1.0.0" />
+    <PackageVersion Include="BaseCore.Framework.DependencyInjection" Version="1.0.0" />
+    <PackageVersion Include="BaseCore.Framework.Configuration" Version="1.0.0" />
+    <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageVersion Include="NLog.Web.AspNetCore" Version="5.3.11" />
     <PackageVersion Include="OpenIddict.EntityFrameworkCore" Version="7.2.0" />
   </ItemGroup>
 </Project>

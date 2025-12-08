@@ -1,6 +1,8 @@
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+
 using BaseCore.Framework.Security.Identity;
 
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 using MudBlazor.Services;
@@ -29,6 +31,14 @@ builder.Services.AddBaseCoreIdentityServer<AppDbContext>(builderOptions =>
 {
 	OpenIddictCoreBuilder coreBuilder = (OpenIddictCoreBuilder)builderOptions;
 	coreBuilder.UseEntityFrameworkCore().UseDbContext<AppDbContext>();
+});
+
+// Configure Autofac
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+{
+	var settings = new Template.Infrastructure.Configuration.ApplicationSettings();
+	builder.Configuration.Bind(settings);
 });
 
 // Auth is already configured by AddBaseCoreIdentityServer

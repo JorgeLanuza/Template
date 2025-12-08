@@ -7,12 +7,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <Content Update="basecore.config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Configuration\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BaseCore.Framework.Web" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <ProjectReference Include="..\Template.Application\Template.Application.csproj" />
     <ProjectReference Include="..\Template.Infrastructure\Template.Infrastructure.csproj" />
     <PackageReference Include="BaseCore.Framework.Security.Identity" />
+    <PackageReference Include="BaseCore.Framework.Observability" />
+    <PackageReference Include="BaseCore.Framework.DependencyInjection" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
+    <PackageReference Include="NLog.Web.AspNetCore" />
   </ItemGroup>
 
 </Project>
