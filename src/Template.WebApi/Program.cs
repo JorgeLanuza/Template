@@ -1,4 +1,5 @@
 using Autofac;
+using Scalar.AspNetCore;
 using Autofac.Extensions.DependencyInjection;
 
 using BaseCore.Framework.Security.Identity;
@@ -35,6 +36,7 @@ WebApplication app = builder.Build();
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.UseHttpsRedirection();
 app.UseAuthorization();

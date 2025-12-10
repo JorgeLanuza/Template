@@ -1,0 +1,54 @@
+@page "/system-status"
+@using System.Reflection
+
+<PageTitle>System Status</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Class="pa-8 d-flex flex-column align-center gap-4" Elevation="3">
+        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Style="width: 100px; height: 100px;" />
+        
+        <MudText Typo="Typo.h4" Color="Color.Success">System Operational</MudText>
+        
+        <MudText Typo="Typo.body1" Align="Align.Center">
+            The Identity Service and Web Application are running correctly.
+        </MudText>
+
+        <MudDivider Class="my-4" Style="width: 100%;" />
+
+        <div class="d-flex flex-column gap-2" style="width: 100%">
+             <div class="d-flex justify-space-between">
+                <MudText Typo="Typo.subtitle2">Environment:</MudText>
+                <MudText Typo="Typo.body2">@Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")</MudText>
+            </div>
+            <div class="d-flex justify-space-between">
+                <MudText Typo="Typo.subtitle2">Framework:</MudText>
+                <MudText Typo="Typo.body2">.NET @Environment.Version</MudText>
+            </div>
+             <div class="d-flex justify-space-between">
+                <MudText Typo="Typo.subtitle2">Server Time:</MudText>
+                <MudText Typo="Typo.body2">@DateTime.Now.ToString("g")</MudText>
+            </div>
+        </div>
+
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Primary" 
+                   Href="/.well-known/openid-configuration" 
+                   Target="_blank"
+                   Class="mt-4"
+                   EndIcon="@Icons.Material.Filled.OpenInNew">
+            View OpenID Configuration
+        </MudButton>
+        
+        <MudButton Variant="Variant.Text" 
+                   Color="Color.Secondary" 
+                   Href="/" 
+                   Class="mt-2">
+            Go to Home
+        </MudButton>
+
+    </MudPaper>
+</MudContainer>
+
+@code {
+    
+}
