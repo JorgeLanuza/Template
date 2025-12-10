@@ -1,6 +1,6 @@
 {
     "$schema": "http://json.schemastore.org/template",
-    "author": "Jorge",
+    "author": "Jorge Pérez de Lanuza",
     "classifications": [
         "Web",
         "API",
@@ -12,7 +12,7 @@
     "shortName": "basecore",
     "tags": {
         "language": "C#",
-        "type": "project"
+        "type": "solution"
     },
     "sourceName": "Template",
     "preferNameDirectory": true,
@@ -28,7 +28,12 @@
                         "**/*.lock.json",
                         "**/*.log",
                         "test/Probe/**",
-                        ".gemini/**"
+                        "test/BlazorFinal/**",
+                        "test/BlazorTest/**",
+                        "test/VerificationProject/**",
+                        ".gemini/**",
+                        "*.txt",
+                        "*.log"
                     ]
                 }
             ]

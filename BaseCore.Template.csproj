@@ -4,7 +4,7 @@
     <PackageId>BaseCore.Template</PackageId>
     <PackageVersion>1.0.0</PackageVersion>
     <Title>BaseCore Solution Template</Title>
-    <Authors>Jorge</Authors>
+    <Authors>Jorge Pérez de Lanuza</Authors>
     <Description>Enterprise-ready Clean Architecture Template using BaseCore.Framework</Description>
     <TargetFramework>net10.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
@@ -15,6 +15,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="**\*" Exclude="**\bin\**;**\obj\**;**\.vs\**;**\*.user;**\*.lock.json;**\.git\**;**\artifacts\**;BaseCore.Template.csproj" />
+    <Content Include="**\*" Exclude="**\bin\**;**\obj\**;**\.vs\**;**\*.user;**\*.lock.json;**\.git\**;**\artifacts\**;BaseCore.Template.csproj;test\BlazorFinal\**;test\BlazorTest\**;test\VerificationProject\**;test\Probe\**;.gemini\**;**\*.log;**\*.txt" />
   </ItemGroup>
 </Project>

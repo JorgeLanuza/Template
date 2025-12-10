@@ -1,0 +1,99 @@
+{
+	"ApplicationName": "BaseCore",
+	"AuthenticationType": "UserDatabase",
+	"ConnectionStrings": [
+		{
+			"Name": "MSSQLLocalDB",
+			"Provider": "SQLServerProvider",
+			"EncodedString": "Server=.;Database=Template.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
+			"Default": "true",
+			"Decoded": "true"
+		},
+		{
+			"Name": "SQLServerConnectionString",
+			"Provider": "SQLServerProvider",
+			"EncodedString": "Server=",
+			"Default": "false",
+			"Decoded": "true"
+		},
+		{
+			"Name": "ATZConnection",
+			"Provider": "SQLServerProvider",
+			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true\"\"",
+			"SigninString": ""
+		},
+		{
+			"Name": "ATHConnection",
+			"Provider": "SQLServerProvider",
+			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true\"\"",
+			"SigninString": ""
+		}
+	],
+	"CertificateSettings": {
+		"EncryptionCertificateSettings": {
+			"StoreName": "My",
+			"StoreLocation": "LocalMachine",
+			"FindType": "FindBySubjectDistinguishedName",
+			"FilteringValue": "CN=BaseCoreEncryptionCertificate"
+		},
+		"SigningCertificateSettings": {
+			"StoreName": "My",
+			"StoreLocation": "LocalMachine",
+			"FindType": "FindBySubjectDistinguishedName",
+			"FilteringValue": "CN=BaseCoreSigningCertificate"
+		}
+	},
+	"OwnCertificates": [],
+	"LoggingSettings": "Configuration/NLog.config",
+	"IdentityServerUrl": "http://localhost:54353",
+	"IdentityServerSettings": {
+		"EntityID": "",
+		"ProviderEntityID": "um:idp_am_val",
+		"MetadataLocation": "metadata_idp.xml",
+		"ClientSettings": {
+			"ClientId": "BaseCore",
+			"PostLogoutRedirectUri": [
+				"/login"
+			],
+			"AllowedScopes": [
+				"api1"
+			]
+		}
+	},
+	"EmailData": [
+		{
+			"Lenguage": "en-EN",
+			"Subject": "BaseCore",
+			"Body": "<html><head></head><body lang=EN link=blue vlink=purple><div style='font-family:Arial, sans-serif;'><p>Dear {0},</p><p>Thank you for registering with BaseCore.</p><p>Click <a href=\\'{{urlChangePassword}}{{resetToken}}'>here</a>to reset your password.</p><p>Regards,</p><p>BaseCore Team</p></div></body></html>"
+		}
+	],
+	"SendEmailSettings": {
+		"UrlChangePassword": "http://localhost:4200/passwordReset",
+		"SmtpEmailServer": {
+			"EncodedString": "",
+			"SigninString": ""
+		},
+		"SmtpEmailFrom": "BaseCore@basecore.com",
+		"NameMailFrom": "BaseCore"
+	},
+	"SameSiteCookie": "Strict",
+	"LdapConectionSettings": {
+		"LdapHostName": {
+			"EncodedString": "",
+			"SigninString": ""
+		},
+		"PortNumber": {
+			"EncodedString": "",
+			"SigninString": ""
+		},
+		"SslEnabled": true
+	},
+	"TrackLoggerSettings": "Configuration/TrackLoggerSettings.json",
+	"DiagnosticEnabled": true,
+	"Clients": [
+		// TODO Add clients information as required by yor application; refer to BaseCore configfuration guide here -->
+	],
+	"ApiScopes": [
+		// TODO Add ApiScopes information as required by yor application; refer to BaseCore configfuration guide here -->
+	]
+}

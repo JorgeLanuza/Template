@@ -13,6 +13,14 @@
     <PackageReference Include="BaseCore.Framework.Domain" />
     <PackageReference Include="BaseCore.Framework.Infrastructure" />
     <PackageReference Include="BaseCore.Framework.Security.Identity" />
+    <PackageReference Include="BaseCore.Framework.Security.Business" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Migrations\" />
+    <Folder Include="Repositories\" />
   </ItemGroup>
 
 </Project>

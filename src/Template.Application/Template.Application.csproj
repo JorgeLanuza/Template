@@ -11,4 +11,10 @@
     <PackageReference Include="BaseCore.Framework.Application" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Dtos\" />
+    <Folder Include="Enums\" />
+    <Folder Include="Tools\" />
+  </ItemGroup>
+
 </Project>

@@ -1,6 +1,0 @@
-@BaseCore.Api_HostAddress = http://localhost:5053
-
-GET {{BaseCore.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

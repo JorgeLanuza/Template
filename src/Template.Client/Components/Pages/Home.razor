@@ -1,0 +1,66 @@
+﻿@page "/"
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Dashboard</MudText>
+<MudText Typo="Typo.subtitle1" Class="mb-4">Welcome to your BaseCore application.</MudText>
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Users</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.People" Color="Color.Primary" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.h3">3,450</MudText>
+                <MudText Typo="Typo.body2">Active members currently online</MudText>
+            </MudCardContent>
+             <MudCardActions>
+                 <MudButton Variant="Variant.Text" Color="Color.Primary">Manage Users</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+     <MudItem xs="12" sm="6" md="4">
+         <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">System Load</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                     <MudIconButton Icon="@Icons.Material.Filled.Speed" Color="Color.Secondary" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.h3">49.4%</MudText>
+                <MudText Typo="Typo.body2">Average CPU usage (Last 24h)</MudText>
+            </MudCardContent>
+             <MudCardActions>
+                 <MudButton Variant="Variant.Text" Color="Color.Secondary">View Metrics</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+     <MudItem xs="12" sm="6" md="4">
+         <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Revenue</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.h3">$18,390</MudText>
+                 <MudText Typo="Typo.body2">Total revenue generated today</MudText>
+            </MudCardContent>
+             <MudCardActions>
+                 <MudButton Variant="Variant.Text" Color="Color.Success">Financial Rep</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
