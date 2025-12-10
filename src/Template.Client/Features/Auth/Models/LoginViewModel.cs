@@ -1,4 +1,4 @@
-﻿namespace Template.Client.Features.Auth.Models;
+namespace Template.Client.Features.Auth.Models;
 
 public class LoginViewModel
 {

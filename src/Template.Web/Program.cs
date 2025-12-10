@@ -1,39 +1,45 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 
+using BaseCore.Framework.Configuration.ApplicationSettings;
+
+using Microsoft.EntityFrameworkCore;
+
 using MudBlazor.Services;
 
-using Template.Client;
+using Template.Client.Components;
 using Template.Client.Extensions;
-using Template.DependencyInjection.Container;
-using Template.IoC;
+using Template.Infrastructure.Context;
 
-string configFilePath = "Core/Configuration/BaseCore.ApplicationSettings.json";
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile(configFilePath, optional: false, reloadOnChange: true);
+// RESTAURADO: Carga la configuración de BaseCore
+builder.Configuration.AddJsonFile("Configuration/BaseCore.ApplicationSettings.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddRazorComponents()
 	.AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
+
+// Registrar servicios del Cliente (Store, etc.)
 builder.Services.AddClientServices();
 
-DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
+// Registrar servicios del Template (DbContexts, etc.)
+Template.IoC.DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
 
-// Configure Autofac Container
+// Configurar contenedor Autofac
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
-	var templateBuilder = new TemplateContainerBuilder(containerBuilder, builder.Configuration);
+	var templateBuilder = new Template.DependencyInjection.ContainerBuilder.TemplateContainerBuilder(containerBuilder, builder.Configuration);
 	templateBuilder.RegisterModule();
 });
 
 WebApplication? app = builder.Build();
 
-// Initialize Database
-DependencyInjection.EnsureDatabaseCreated(app.Services);
+// Inicializar Base de Datos
+Template.IoC.DependencyInjection.EnsureDatabaseCreated(app.Services);
 
 if (!app.Environment.IsDevelopment())
 {

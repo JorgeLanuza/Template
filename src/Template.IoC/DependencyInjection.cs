@@ -11,6 +11,7 @@ using BaseCore.Framework.IdentityServer.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using Template.Infrastructure.Context;
 
@@ -29,16 +30,26 @@ public static class DependencyInjection
 
 		services.AddDbContext<AppIdentityDbContext>(options =>
 			options.UseSqlServer(connectionString));
+
+		// Registrar SecurityDbContext (Identity)
+		services.AddDbContext<BaseCore.Framework.Security.DataAccess.Context.SecurityDbContext>(options =>
+			options.UseSqlServer(baseCoreSettings.ConnectionStrings.FirstOrDefault(x => x.Name == "ATHConnection")?.EncodedString ?? connectionString));
+
+		// Registrar Repositorios de Seguridad
+		services.AddScoped<BaseCore.Framework.Security.DataAccess.Repositories.Authentication.AuthenticationRepository>();
+		services.AddScoped<BaseCore.Framework.Security.DataAccess.Repositories.Authentication.UserRepository>();
+		services.AddScoped<BaseCore.Framework.Security.DataAccess.Repositories.Authorization.RoleRepository>();
+		services.AddScoped<BaseCore.Framework.Security.DataAccess.Repositories.Authorization.UserApplicationRolesRepository>();
 	}
 
 	public static void RegisterDependencyInjector(BaseCoreContainerBuilder builder)
 	{
 		builder.Register(context =>
 		{
-			var loggerFactory = context.Resolve<Microsoft.Extensions.Logging.ILoggerFactory>();
-			var expression = new MapperConfigurationExpression();
+			ILoggerFactory loggerFactory = context.Resolve<Microsoft.Extensions.Logging.ILoggerFactory>();
+			MapperConfigurationExpression expression = new();
 			expression.AddMaps(Assembly.GetExecutingAssembly());
-			var config = new MapperConfiguration(expression, loggerFactory);
+			MapperConfiguration config = new(expression, loggerFactory);
 			return config.CreateMapper();
 		}).As<IMapper>().InstancePerLifetimeScope();
 	}

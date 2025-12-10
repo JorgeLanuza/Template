@@ -3,7 +3,11 @@ using Scalar.AspNetCore;
 using Autofac.Extensions.DependencyInjection;
 
 using BaseCore.Framework.Security.Identity;
+using BaseCore.Framework.Security.Identity;
+using BaseCore.Framework.Security.DataAccess.Context;
 using BaseCore.Framework.Web.Middlewares;
+using Microsoft.EntityFrameworkCore;
+using OpenIddict.Core;
 using Template.Application;
 using Template.DependencyInjection.Container;
 
@@ -19,7 +23,10 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddApplicationLayer();
 
-// Configure Autofac
+// Registra Servicios de IoC (DbContext, Repositories)
+Template.IoC.DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
+
+// Configurar Autofac
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
@@ -27,12 +34,21 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 	templateBuilder.RegisterModule();
 });
 
-// Auth Validation
+// Configurar Identity Server (Self-Hosted)
+builder.Services.AddBaseCoreIdentityServer<SecurityDbContext>(options =>
+{
+    // Configure OpenIddict to use EF Core
+    var coreBuilder = (OpenIddictCoreBuilder)options;
+    coreBuilder.UseEntityFrameworkCore()
+               .UseDbContext<SecurityDbContext>();
+});
+
+// Habilitar Validación de Tokens (Local) - Resource Server
 builder.Services.AddBaseCoreIdentityValidation();
 
 WebApplication app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configurar el pipeline de solicitudes HTTP
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapOpenApi();

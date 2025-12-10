@@ -45,7 +45,7 @@
 	},
 	"OwnCertificates": [],
 	"LoggingSettings": "Configuration/NLog.config",
-	"IdentityServerUrl": "http://localhost:54353",
+	"IdentityServerUrl": "https://localhost:7197",
 	"IdentityServerSettings": {
 		"EntityID": "",
 		"ProviderEntityID": "um:idp_am_val",
@@ -90,10 +90,6 @@
 	},
 	"TrackLoggerSettings": "Configuration/TrackLoggerSettings.json",
 	"DiagnosticEnabled": true,
-	"Clients": [
-		// TODO Add clients information as required by yor application; refer to BaseCore configfuration guide here -->
-	],
-	"ApiScopes": [
-		// TODO Add ApiScopes information as required by yor application; refer to BaseCore configfuration guide here -->
-	]
+	"Clients": [],
+	"ApiScopes": []
 }
