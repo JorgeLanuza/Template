@@ -1,0 +1,51 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+@if (_showBanner)
+{
+    <MudPaper Class="fixed-bottom pa-4 z-100" Elevation="25" Style="bottom: 0; left: 0; right: 0; position: fixed; border-radius: 0;">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.h6">Cookie Policy</MudText>
+                <MudText Typo="Typo.body2">
+                    We use cookies to improve your experience. By using our site, you agree to our use of cookies.
+                    <MudLink Href="privacy" Color="Color.Primary" Underline="Underline.Always">Read our Privacy Policy</MudLink>.
+                </MudText>
+            </MudStack>
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeclineCookies">Decline</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AcceptCookies">Accept</MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+}
+
+@code {
+    private bool _showBanner = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var consent = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "cookieConsent");
+            if (string.IsNullOrEmpty(consent))
+            {
+                _showBanner = true;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task AcceptCookies()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "cookieConsent", "accepted");
+        _showBanner = false;
+    }
+
+    private async Task DeclineCookies()
+    {
+        // In a real app, you might disable tracking scripts here.
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "cookieConsent", "declined");
+        _showBanner = false;
+    }
+}

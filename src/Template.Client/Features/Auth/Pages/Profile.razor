@@ -1,0 +1,105 @@
+@page "/profile"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>My Profile</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    @if (_user == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mx-auto d-block" />
+    }
+    else
+    {
+        <MudGrid Justify="Justify.Center">
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="4" Class="rounded-lg">
+                    <MudCardHeader Class="pb-0">
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Primary" Size="Size.Large">
+                                @GetInitials()
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5">@GetFullName()</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">@GetEmail()</MudText>
+                            @if (IsActive())
+                            {
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text" Class="mt-1">Active Account</MudChip>
+                            }
+                        </CardHeaderContent>
+                         <CardHeaderActions>
+                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" Disabled="true" Title="Edit Profile (Coming Soon)" />
+                         </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                         <MudDivider Class="my-4" />
+                        <MudGrid>
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">First Name</MudText>
+                                <MudText Typo="Typo.body1">@GetClaimValue("given_name")</MudText>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Last Name</MudText>
+                                <MudText Typo="Typo.body1">@GetClaimValue("family_name")</MudText>
+                            </MudItem>
+                             <MudItem xs="12">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">UserId</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@GetUserId()</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Href="/change-password" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.LockReset" Class="ml-2 mb-2">Change Password</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private ClaimsPrincipal? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _user = authState.User;
+    }
+
+    private string GetClaimValue(string claimType)
+    {
+        return _user?.Claims.FirstOrDefault(c => c.Type == claimType)?.Value ?? "N/A";
+    }
+    
+    // Fallback helpers in case mapping varies
+    private string GetFullName()
+    {
+        var first = GetClaimValue("given_name");
+        var last = GetClaimValue("family_name");
+        var name = _user?.Identity?.Name;
+        
+        if (first != "N/A" || last != "N/A")
+        {
+             return $"{first} {last}".Trim();
+        }
+        return name ?? "Unknown User";
+    }
+
+    private string GetEmail() => _user?.Claims.FirstOrDefault(c => c.Type == "email" || c.Type == ClaimTypes.Email)?.Value ?? "No Email";
+
+    private string GetUserId() => _user?.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == ClaimTypes.NameIdentifier)?.Value ?? "N/A";
+
+    private string GetInitials()
+    {
+         var first = GetClaimValue("given_name");
+         if (first != "N/A" && first.Length > 0) return first.Substring(0, 1).ToUpper();
+         return _user?.Identity?.Name?.Substring(0, 1).ToUpper() ?? "?";
+    }
+
+    // IsActive isn't standard in token usually, but if we assume it might be there:
+    // If not, we just assume active because they are logged in. 
+    // Usually IdentityServer does not issue tokens to inactive users.
+    private bool IsActive() => true; 
+}

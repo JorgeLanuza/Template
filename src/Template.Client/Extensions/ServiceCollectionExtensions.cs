@@ -2,6 +2,7 @@ using Template.Client.Features.Auth.Services;
 using Template.Client.Features.Auth.Services.Interfaces;
 using Template.Client.Features.Auth.State;
 using Template.Client.State;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Template.Client.Extensions;
 
@@ -31,6 +32,7 @@ public static class ServiceCollectionExtensions
 		// Configure HttpClient with Backend Base Address
 		services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7197") });
 
+		services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 		services.AddScoped<IAuthService, AuthService>();
 
 		return services;

@@ -1,6 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <Compile Remove="Features\Dashboard\**" />
+    <Content Remove="Features\Dashboard\**" />
+    <EmbeddedResource Remove="Features\Dashboard\**" />
+    <None Remove="Features\Dashboard\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.0\contentFiles\any\net10.0\Configuration\BaseCore.ApplicationSettings.json" />
     <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.0\contentFiles\any\net10.0\Configuration\NLog.config" />
     <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.0\contentFiles\any\net10.0\Configuration\TrackerLoggerSettings.json" />
@@ -50,14 +57,12 @@
     <Folder Include="Api\Abstractions\" />
     <Folder Include="Api\Clients\" />
     <Folder Include="Api\Interceptors\" />
-    <Folder Include="Components\Layout\" />
     <Folder Include="Core\Constants\" />
     <Folder Include="Core\Mapping\" />
-    <Folder Include="Features\Dashboard\Components\" />
-    <Folder Include="Features\Dashboard\Models\" />
-    <Folder Include="Features\Dashboard\Services\" />
-    <Folder Include="Features\Dashboard\State\" />
-    <Folder Include="Features\Dashboard\Pages\" />
+    <Folder Include="Features\User\Components\" />
+    <Folder Include="Features\User\Models\" />
+    <Folder Include="Features\User\State\" />
+    <Folder Include="Features\User\Services\" />
     <Folder Include="State\Actions\" />
     <Folder Include="State\Reducers\" />
     <Folder Include="Theme\" />

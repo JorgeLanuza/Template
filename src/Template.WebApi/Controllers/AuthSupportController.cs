@@ -6,6 +6,8 @@ using BaseCore.Framework.Web.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Template.WebApi.Models;
+
 namespace Template.WebApi.Controllers;
 
 [Route("api/auth")]
@@ -87,13 +89,4 @@ public class AuthSupportController(CredentialManagerService credentialManagerSer
 	}
 }
 
-// Define DTO locally or in a shared project if preferred.
-// Placing here for self-containment unless User demands shared DTOs now.
-#pragma warning disable SA1402
-public class PasswordResetRequestDto
-#pragma warning restore SA1402
-{
-	public string Username { get; set; } = string.Empty;
 
-	public string NewPassword { get; set; } = string.Empty;
-}

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
 using Template.Client.Features.Auth.Services.Interfaces;
+using Template.Client.Features.Auth.Models;
 
 namespace Template.Client.Features.Auth.Services;
 
@@ -44,7 +45,11 @@ public class AuthService(HttpClient httpClient, IJSRuntime jsRuntime, Authentica
 
 			await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", tokenResult.AccessToken);
 
-			// In a real app, notify the AuthStateProvider here to update the UI immediately
+			// Notify AuthStateProvider
+			if (_authStateProvider is CustomAuthStateProvider customProvider)
+			{
+				customProvider.NotifyUserAuthentication(tokenResult.AccessToken);
+			}
 
 			return true;
 		}
@@ -54,7 +59,14 @@ public class AuthService(HttpClient httpClient, IJSRuntime jsRuntime, Authentica
 		}
 	}
 
-	public async Task LogoutAsync() => await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+	public async Task LogoutAsync()
+	{
+		await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+		if (_authStateProvider is CustomAuthStateProvider customProvider)
+		{
+			customProvider.NotifyUserLogout();
+		}
+	}
 
 	public async Task<bool> ChangePasswordAsync(string oldPassword, string newPassword)
 	{
@@ -72,12 +84,4 @@ public class AuthService(HttpClient httpClient, IJSRuntime jsRuntime, Authentica
 		return response.IsSuccessStatusCode;
 	}
 
-	private sealed class TokenResponse
-	{
-		[System.Text.Json.Serialization.JsonPropertyName("access_token")]
-		public string AccessToken { get; set; } = string.Empty;
-
-		[System.Text.Json.Serialization.JsonPropertyName("expires_in")]
-		public int ExpiresIn { get; set; }
-	}
 }

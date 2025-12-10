@@ -3,14 +3,13 @@
 @using Template.Client.State
 @using Template.Client.Features.Auth.State
 @using Template.Client.Features.Auth.Services
-@inject Store Store
-@inject IAuthService AuthService
-@inject NavigationManager Navigation
+@using Template.Client.Theme
 
 <MudThemeProvider Theme="_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
+<Template.Client.Shared.Components.CookieConsent />
 
 <MudLayout>
     <MudAppBar Elevation="1">
@@ -22,30 +21,46 @@
         </MudHidden>
 
         <MudStack Row="true" Spacing="4" Class="d-none d-md-flex">
-            <MudButton Href="" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Dashboard">Dashboard</MudButton>
-            <MudButton Href="user" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.People">Users</MudButton>
-            <MudButton Href="password-generator" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Password">Password Gen</MudButton>
-            <MudButton Href="system-status" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.MonitorHeart">Status</MudButton>
+            <MudButton Href="/" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Dashboard">Dashboard</MudButton>
+            @if (_authState.IsAuthenticated)
+            {
+                <MudButton Href="/profile" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Person">My profile</MudButton>
+            }
         </MudStack>
 
         <MudSpacer />
         
-        @if (_authState.IsAuthenticated)
-        {
-            <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Density="Density.Compact" Label="Profile">
-                <MudMenuItem Href="profile" Icon="@Icons.Material.Filled.Person">My Profile</MudMenuItem>
-                <MudMenuItem Href="change-password" Icon="@Icons.Material.Filled.Key">Change Password</MudMenuItem>
-                <MudDivider />
-                <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Filled.Logout">Logout</MudMenuItem>
-            </MudMenu>
-        }
-        else
-        {
-            <MudButton Href="login" Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Login" Class="ml-4">Login</MudButton>
-        }
-
-        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.Brightness7 : Icons.Material.Filled.Brightness4)" Color="Color.Inherit" OnClick="@ToggleTheme" />
-        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" />
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.Brightness7 : Icons.Material.Filled.Brightness4)" Color="Color.Inherit" OnClick="@ToggleTheme" Class="mr-2" />
+                <AuthorizeView>
+                    <Authorized>
+                        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" LockScroll="true">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Person" EndIcon="@Icons.Material.Filled.ArrowDropDown">
+                                    @context.User.Identity?.Name
+                                </MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.Person">My Profile</MudMenuItem>
+                                <MudMenuItem Href="/change-password" Icon="@Icons.Material.Filled.Key">Change Password</MudMenuItem>
+                                @if (IsDevelopment)
+                                {
+                                    <MudMenuItem Href="https://localhost:7197/.well-known/openid-configuration" Target="_blank" Icon="@Icons.Material.Filled.Info">Identity Info</MudMenuItem>
+                                }
+                                <MudDivider />
+                                <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Filled.Logout">Logout</MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" LockScroll="true">
+                            <MudMenuItem Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudMenuItem>
+                            @if (IsDevelopment)
+                            {
+                                <MudMenuItem Href="https://localhost:7197/.well-known/openid-configuration" Target="_blank" Icon="@Icons.Material.Filled.Info">Identity Info</MudMenuItem>
+                            }
+                        </MudMenu>
+                    </NotAuthorized>
+                </AuthorizeView>
     </MudAppBar>
     
     <MudMainContent>
@@ -54,51 +69,3 @@
         </MudContainer>
     </MudMainContent>
 </MudLayout>
-
-@code {
-    bool _isDarkMode = true;
-    private AuthState _authState = new();
-    
-    protected override void OnInitialized()
-    {
-        _authState = Store.GetState<AuthState>();
-        Store.Subscribe<AuthState>(UpdateState);
-    }
-
-    private void UpdateState(AuthState newState)
-    {
-        _authState = newState;
-        InvokeAsync(StateHasChanged);
-    }
-
-    private async Task LogoutAsync()
-    {
-        await AuthService.LogoutAsync();
-        Store.Dispatch(new LoginFailureAction("Logged out")); // Or create a LogoutAction
-        Navigation.NavigateTo("/login");
-    }
-
-    private MudTheme _theme = new()
-    {
-        PaletteLight = new PaletteLight()
-        {
-            Primary = "#594AE2",
-            Secondary = "#FF4081",
-            AppbarBackground = "#594AE2",
-        },
-        PaletteDark = new PaletteDark()
-        {
-            Primary = "#776be7",
-            Secondary = "#FF4081",
-            AppbarBackground = "#1b1f22",
-            Background = "#1b1f22",
-            Surface = "#212529",
-            DrawerBackground = "#15171a",
-        }
-    };
-
-    void ToggleTheme()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
-}

@@ -4,7 +4,9 @@
 @using Template.Client.Features.Auth.Services.Interfaces
 @using Template.Client.State
 @using Template.Client.Features.Auth.State
+@using Template.Client.Features.Auth.Models
 @inject IAuthService AuthService
+@inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject Store Store
 
@@ -20,35 +22,48 @@
             </MudCardHeader>
             <MudCardContent>
                 <MudForm @ref="_form" @bind-IsValid="@_success">
-                    <MudTextField T="string" Label="Username" Required="true" 
-                                  @bind-Value="_model.Username"
-                                  RequiredError="Username is required!" />
+                    <MudTextField T="string" 
+                                   Label="Username" 
+                                   Placeholder="Enter your username"
+                                   Variant="Variant.Outlined"
+                                   @bind-Value="_model.Username"
+                                   For="@(() => _model.Username)"
+                                   Class="mb-4" />
                                   
-                    <MudTextField T="string" Label="Password" InputType="InputType.Password" Required="true" 
+                    <MudTextField T="string" 
+                                  Label="Password" 
+                                  Placeholder="Enter your password"
+                                  Variant="Variant.Outlined"
+                                  InputType="InputType.Password" 
                                   @bind-Value="_model.Password"
-                                  RequiredError="Password is required!" />
+                                  For="@(() => _model.Password)"
+                                  Class="mb-2" />
+
+                    <MudButton ButtonType="ButtonType.Button" 
+                               Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               FullWidth="true" 
+                               Size="Size.Large"
+                               Class="mt-4"
+                               Disabled="@_state.IsLoading"
+                               OnClick="SubmitAsync">
+                        @if (_state.IsLoading)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                            <MudText Class="ms-2">Processing</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Login</MudText>
+                        }
+                    </MudButton>
                 </MudForm>
                 
                 @if (!string.IsNullOrEmpty(_state.ErrorMessage))
                 {
-                    <MudAlert Severity="Severity.Error" Class="mt-2">@_state.ErrorMessage</MudAlert>
+                    <MudAlert Severity="Severity.Error" Class="mt-2" ShowCloseIcon="true">@_state.ErrorMessage</MudAlert>
                 }
             </MudCardContent>
-            <MudCardActions>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                           Disabled="@(!_success || _state.IsLoading)"
-                           OnClick="SubmitAsync">
-                    @if (_state.IsLoading)
-                    {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                        <MudText Class="ms-2">Processing</MudText>
-                    }
-                    else
-                    {
-                        <MudText>Login</MudText>
-                    }
-                </MudButton>
-            </MudCardActions>
         </MudCard>
     </MudItem>
 </MudGrid>
@@ -58,7 +73,7 @@
     private bool _success;
     private AuthState _state = new();
 
-    private LoginModel _model = new();
+    private LoginViewModel _model = new();
 
     protected override void OnInitialized()
     {
@@ -74,10 +89,12 @@
 
     private async Task SubmitAsync()
     {
+        Console.WriteLine("SubmitAsync Clicked");
         await _form.Validate();
 
         if (_form.IsValid)
         {
+            Console.WriteLine("Form Is Valid. Attempting Login...");
             Store.Dispatch(new LoginAction());
 
             bool result = await AuthService.LoginAsync(_model.Username, _model.Password);
@@ -85,22 +102,17 @@
             if (result)
             {
                 Store.Dispatch(new LoginSuccessAction("token-placeholder-managed-by-service"));
-                
                 Navigation.NavigateTo("/");
             }
             else
             {
                 Store.Dispatch(new LoginFailureAction("Invalid username or password."));
+                Snackbar.Add("Invalid username or password.", Severity.Error);
             }
         }
-    }
-
-    public class LoginModel
-    {
-        [Required]
-        public string Username { get; set; } = string.Empty;
-
-        [Required]
-        public string Password { get; set; } = string.Empty;
+        else
+        {
+             Snackbar.Add("Please fill in all required fields.", Severity.Warning);
+        }
     }
 }
