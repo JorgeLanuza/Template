@@ -2,7 +2,7 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 
 using BaseCore.Framework.Security.Identity;
-
+using BaseCore.Framework.Web.Middlewares;
 using Template.Application;
 using Template.DependencyInjection.Container;
 
@@ -22,7 +22,7 @@ builder.Services.AddApplicationLayer();
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
-	var templateBuilder = new TemplateContainerBuilder(containerBuilder, builder.Configuration);
+	TemplateContainerBuilder templateBuilder = new(containerBuilder, builder.Configuration);
 	templateBuilder.RegisterModule();
 });
 
@@ -32,7 +32,7 @@ builder.Services.AddBaseCoreIdentityValidation();
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseMiddleware<BaseCore.Framework.Web.Middlewares.ExceptionMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapOpenApi();
 

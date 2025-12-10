@@ -5,6 +5,7 @@ using MudBlazor.Services;
 
 using Template.Client;
 using Template.DependencyInjection.Container;
+using Template.IoC;
 
 string configFilePath = "Core/Configuration/BaseCore.ApplicationSettings.json";
 
@@ -17,7 +18,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
-Template.IoC.DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
+DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
 
 // Configure Autofac Container
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
@@ -30,7 +31,7 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 WebApplication? app = builder.Build();
 
 // Initialize Database
-Template.IoC.DependencyInjection.EnsureDatabaseCreated(app.Services);
+DependencyInjection.EnsureDatabaseCreated(app.Services);
 
 if (!app.Environment.IsDevelopment())
 {
