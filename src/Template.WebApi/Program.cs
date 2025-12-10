@@ -1,13 +1,12 @@
 using Autofac;
-using Scalar.AspNetCore;
 using Autofac.Extensions.DependencyInjection;
 
-using BaseCore.Framework.Security.Identity;
-using BaseCore.Framework.Security.Identity;
 using BaseCore.Framework.Security.DataAccess.Context;
+using BaseCore.Framework.Security.Identity;
 using BaseCore.Framework.Web.Middlewares;
-using Microsoft.EntityFrameworkCore;
-using OpenIddict.Core;
+
+using Scalar.AspNetCore;
+
 using Template.Application;
 using Template.DependencyInjection.Container;
 
