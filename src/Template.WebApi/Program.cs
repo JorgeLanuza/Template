@@ -1,7 +1,7 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 
-using BaseCore.Framework.Security.DataAccess.Context;
+using BaseCore.Framework.IdentityServer.Configuration;
 using BaseCore.Framework.Security.Identity;
 using BaseCore.Framework.Web.Middlewares;
 
@@ -9,6 +9,7 @@ using Scalar.AspNetCore;
 
 using Template.Application;
 using Template.DependencyInjection.Container;
+using AppIdentityDbContext = Template.Infrastructure.Context.AppIdentityDbContext;
 
 string configFilePath = "Configuration/BaseCore.ApplicationSettings.json";
 
@@ -25,6 +26,8 @@ builder.Services.AddApplicationLayer();
 // Registra Servicios de IoC (DbContext, Repositories)
 Template.IoC.DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
 
+// ... Autofac config follows ...
+
 // Configurar Autofac
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
@@ -34,12 +37,12 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 });
 
 // Configurar Identity Server (Self-Hosted)
-builder.Services.AddBaseCoreIdentityServer<SecurityDbContext>(options =>
+builder.Services.AddBaseCoreIdentityServer<AppIdentityDbContext>(options =>
 {
     // Configure OpenIddict to use EF Core
     var coreBuilder = (OpenIddictCoreBuilder)options;
     coreBuilder.UseEntityFrameworkCore()
-               .UseDbContext<SecurityDbContext>();
+               .UseDbContext<AppIdentityDbContext>();
 });
 
 // Habilitar Validación de Tokens (Local) - Resource Server
@@ -56,5 +59,12 @@ app.MapScalarApiReference();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+app.UseAuthorization();
+app.MapControllers();
+
+// Initialize Database and Seed Data
+Template.Infrastructure.Data.DbInitializer.EnsureDatabaseCreated(app.Services);
+await Template.Infrastructure.Data.DbInitializer.SeedOpenIddictClientsAsync(app.Services, app.Configuration);
 
 await app.RunAsync();

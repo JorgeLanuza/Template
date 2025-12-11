@@ -32,6 +32,8 @@ public static class ServiceCollectionExtensions
 		// Configure HttpClient with Backend Base Address
 		services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7197") });
 
+		services.AddAuthentication();
+		services.AddAuthorizationCore();
 		services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 		services.AddScoped<IAuthService, AuthService>();
 

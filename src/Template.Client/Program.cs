@@ -6,6 +6,7 @@ using MudBlazor.Services;
 using Template.Client;
 using Template.Client.Extensions;
 using Template.DependencyInjection.Container;
+using Template.Infrastructure.Data;
 using Template.IoC;
 
 string configFilePath = "Core/Configuration/BaseCore.ApplicationSettings.json";
@@ -26,14 +27,14 @@ DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
-	var templateBuilder = new TemplateContainerBuilder(containerBuilder, builder.Configuration);
+	TemplateContainerBuilder templateBuilder = new(containerBuilder, builder.Configuration);
 	templateBuilder.RegisterModule();
 });
 
 WebApplication? app = builder.Build();
 
 // Initialize Database
-DependencyInjection.EnsureDatabaseCreated(app.Services);
+DbInitializer.EnsureDatabaseCreated(app.Services);
 
 if (!app.Environment.IsDevelopment())
 {

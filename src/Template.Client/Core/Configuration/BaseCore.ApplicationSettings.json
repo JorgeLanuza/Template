@@ -19,14 +19,16 @@
 		{
 			"Name": "ATZConnection",
 			"Provider": "SQLServerProvider",
-			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true\"\"",
-			"SigninString": ""
+			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
+			"Default": "true",
+			"Decoded": "true"
 		},
 		{
 			"Name": "ATHConnection",
 			"Provider": "SQLServerProvider",
-			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true\"\"",
-			"SigninString": ""
+			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
+			"Default": "true",
+			"Decoded": "true"
 		}
 	],
 	"CertificateSettings": {
@@ -90,10 +92,6 @@
 	},
 	"TrackLoggerSettings": "Configuration/TrackLoggerSettings.json",
 	"DiagnosticEnabled": true,
-	"Clients": [
-		// TODO Add clients information as required by yor application; refer to BaseCore configfuration guide here -->
-	],
-	"ApiScopes": [
-		// TODO Add ApiScopes information as required by yor application; refer to BaseCore configfuration guide here -->
-	]
+	"Clients": [],
+	"ApiScopes": []
 }

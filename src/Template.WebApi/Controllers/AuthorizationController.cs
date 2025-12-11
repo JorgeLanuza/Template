@@ -1,13 +1,8 @@
 using System.Security.Claims;
-
-using BaseCore.Framework.Security.Business.Helpers;
 using BaseCore.Framework.Security.DataAccess.Entities.Authentication;
-using BaseCore.Framework.Security.DataAccess.Entities.Authorization;
-using BaseCore.Framework.Security.DataAccess.Repositories.Authentication;
-using BaseCore.Framework.Security.DataAccess.Repositories.Authorization;
-
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 using OpenIddict.Abstractions;
@@ -15,17 +10,23 @@ using OpenIddict.Server.AspNetCore;
 
 namespace Template.WebApi.Controllers;
 
-[ApiController]
-[Route("connect")]
-public class AuthorizationController(AuthenticationRepository authenticationRepository, UserRepository userRepository, RoleRepository roleRepository, UserApplicationRolesRepository userApplicationRolesRepository) : ControllerBase
+public class AuthorizationController(
+	BaseCore.Framework.Security.Business.Services.AuthenticationService authenticationService,
+	IPasswordHasher<AuthenticationEntity> passwordHasher,
+	BaseCore.Framework.Security.DataAccess.Repositories.Authentication.AuthenticationRepository authenticationRepository,
+	BaseCore.Framework.Security.DataAccess.Repositories.Authentication.UserRepository userRepository) : ControllerBase
 {
-	private readonly AuthenticationRepository _authenticationRepository = authenticationRepository;
+	private readonly BaseCore.Framework.Security.Business.Services.AuthenticationService _authenticationService = authenticationService;
+	private readonly IPasswordHasher<AuthenticationEntity> _passwordHasher = passwordHasher;
+	private readonly BaseCore.Framework.Security.DataAccess.Repositories.Authentication.AuthenticationRepository _authenticationRepository = authenticationRepository;
+	private readonly BaseCore.Framework.Security.DataAccess.Repositories.Authentication.UserRepository _userRepository = userRepository;
 
-	private readonly UserRepository _userRepository = userRepository;
-
-	private readonly RoleRepository _roleRepository = roleRepository;
-
-	private readonly UserApplicationRolesRepository _userApplicationRolesRepository = userApplicationRolesRepository;
+	[HttpGet("debug-hash")]
+	public IActionResult GetHash([FromQuery] string password)
+	{
+		AuthenticationEntity dummyUser = new() { AuthenticationId = "debug" };
+		return Ok(_passwordHasher.HashPassword(dummyUser, password));
+	}
 
 	[HttpPost("token")]
 	[Produces("application/json")]
@@ -37,28 +38,25 @@ public class AuthorizationController(AuthenticationRepository authenticationRepo
 
 		if (request.IsPasswordGrantType())
 		{
-			string? authId = request.Username;
-			AuthenticationEntity? auth = await _authenticationRepository.FindAsync(x => x!.AuthenticationId == authId);
+			ClaimsPrincipal? principal = await _authenticationService.AuthenticateAndCreatePrincipalAsync(request.Username ?? string.Empty, request.Password ?? string.Empty);
 
-			if (auth == null || !Cyphering.CheckPassword(request.Password!, auth.Password))
-			{
-				return Forbid(authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, properties: new AuthenticationProperties(new Dictionary<string, string?>
-					{
-						[OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.InvalidGrant, [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The username/password couple is invalid.",
-					}));
-			}
-
-			UserEntity? user = await _userRepository.FindAsync(u => u!.AuthenticationId == authId);
-			if (user == null || user.Disabled || user.Locked.GetValueOrDefault())
+			if (principal is null)
 			{
 				return Forbid(authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, properties: new AuthenticationProperties(new Dictionary<string, string?>
 				{
 					[OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.InvalidGrant,
-					[OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The user is disabled or locked.",
+					[OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The username/password couple is invalid or the user is disabled.",
 				}));
 			}
 
-			ClaimsPrincipal principal = await CreatePrincipalAsync(user);
+			// OpenIddict: Set the scopes granted to the client
+			principal.SetScopes(request.GetScopes());
+
+			// OpenIddict: Set the destinations of the claims (AccessToken vs IdentityToken)
+			foreach (Claim claim in principal.Claims)
+			{
+				claim.SetDestinations(GetDestinations(claim));
+			}
 
 			return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
 		}
@@ -70,37 +68,25 @@ public class AuthorizationController(AuthenticationRepository authenticationRepo
 		});
 	}
 
-	private async Task<ClaimsPrincipal> CreatePrincipalAsync(UserEntity user)
+	private static IEnumerable<string> GetDestinations(Claim claim)
 	{
-		ClaimsIdentity identity = new(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
 
-		identity.AddClaim(OpenIddictConstants.Claims.Subject, user.AuthenticationId ?? string.Empty);
-		identity.AddClaim(OpenIddictConstants.Claims.Name, user.AuthenticationId ?? string.Empty);
-		identity.AddClaim(OpenIddictConstants.Claims.Username, user.AuthenticationId ?? string.Empty);
-
-		List<UserApplicationRolesEntity> userRoles = [.. _userApplicationRolesRepository.FindAll(x => x.UserId == user.Id)];
-		foreach (UserApplicationRolesEntity userRole in userRoles)
+		switch (claim.Type)
 		{
-			RoleEntity role = await _roleRepository.GetAsync(userRole.RoleId);
-			if (role != null)
-				identity.AddClaim(OpenIddictConstants.Claims.Role, role.Name);
+			case OpenIddictConstants.Claims.Name:
+			case OpenIddictConstants.Claims.Email:
+			case OpenIddictConstants.Claims.Subject:
+			case OpenIddictConstants.Claims.Role:
+				yield return OpenIddictConstants.Destinations.AccessToken;
+				yield return OpenIddictConstants.Destinations.IdentityToken;
+				break;
+
+			case "AspNet.Identity.SecurityStamp": 
+				yield break;
+
+			default:
+				yield return OpenIddictConstants.Destinations.AccessToken;
+				break;
 		}
-
-		ClaimsPrincipal principal = new(identity);
-
-		principal.SetScopes(new[]
-		{
-			// OpenIddictConstants.Scopes.OpenId, // Usually implicit
-            "openid",
-			OpenIddictConstants.Scopes.Email,
-			OpenIddictConstants.Scopes.Profile,
-			OpenIddictConstants.Scopes.Roles,
-            OpenIddictConstants.Scopes.OfflineAccess, // Critical for RefreshToken
-		});
-
-		// if needed
-		// principal.SetResources(...);
-
-		return Task.FromResult(principal).Result;
 	}
 }

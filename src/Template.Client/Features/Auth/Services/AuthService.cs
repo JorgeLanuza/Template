@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
-using Template.Client.Features.Auth.Services.Interfaces;
 using Template.Client.Features.Auth.Models;
+using Template.Client.Features.Auth.Services.Interfaces;
 
 namespace Template.Client.Features.Auth.Services;
 
@@ -44,17 +44,17 @@ public class AuthService(HttpClient httpClient, IJSRuntime jsRuntime, Authentica
 				return false;
 
 			await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", tokenResult.AccessToken);
+			await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "idToken", tokenResult.IdToken);
 
-			// Notify AuthStateProvider
+			// Notify AuthStateProvider using the ID Token (which contains the user profile)
 			if (_authStateProvider is CustomAuthStateProvider customProvider)
-			{
-				customProvider.NotifyUserAuthentication(tokenResult.AccessToken);
-			}
+				customProvider.NotifyUserAuthentication(tokenResult.IdToken);
 
 			return true;
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			Console.WriteLine($"[AuthService] LoginAsync Error: {ex.Message}");
 			return false;
 		}
 	}
@@ -62,6 +62,7 @@ public class AuthService(HttpClient httpClient, IJSRuntime jsRuntime, Authentica
 	public async Task LogoutAsync()
 	{
 		await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+		await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "idToken");
 		if (_authStateProvider is CustomAuthStateProvider customProvider)
 		{
 			customProvider.NotifyUserLogout();

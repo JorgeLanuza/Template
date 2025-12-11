@@ -13,7 +13,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+using OpenIddict.Abstractions;
+
 using Template.Infrastructure.Context;
+using AppIdentityDbContext = Template.Infrastructure.Context.AppIdentityDbContext;
 
 namespace Template.IoC;
 
@@ -40,6 +43,18 @@ public static class DependencyInjection
 		services.AddScoped<BaseCore.Framework.Security.DataAccess.Repositories.Authentication.UserRepository>();
 		services.AddScoped<BaseCore.Framework.Security.DataAccess.Repositories.Authorization.RoleRepository>();
 		services.AddScoped<BaseCore.Framework.Security.DataAccess.Repositories.Authorization.UserApplicationRolesRepository>();
+
+		// Registrar Servicios de Negocio de Seguridad (Framework 1.0.2)
+		services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<BaseCore.Framework.Security.DataAccess.Entities.Authentication.AuthenticationEntity>, Microsoft.AspNetCore.Identity.PasswordHasher<BaseCore.Framework.Security.DataAccess.Entities.Authentication.AuthenticationEntity>>();
+		services.AddScoped<BaseCore.Framework.Security.Business.Services.CredentialPoliciesManagerService>();
+		services.AddScoped<BaseCore.Framework.Security.Business.Services.AuthenticationService>();
+		services.AddScoped<BaseCore.Framework.Security.Business.Services.CredentialManagerService>();
+
+		// Dependencias de AuthenticationService
+		services.AddHttpContextAccessor();
+		services.AddScoped<BaseCore.Framework.Security.Business.Helpers.HttpContextHelper>();
+		services.AddScoped<BaseCore.Framework.Observability.Audit.BaseCoreAuditFactory>();
+		services.AddScoped(typeof(BaseCore.Framework.Domain.Validations.BaseCoreValidation<>));
 	}
 
 	public static void RegisterDependencyInjector(BaseCoreContainerBuilder builder)
@@ -52,17 +67,5 @@ public static class DependencyInjection
 			MapperConfiguration config = new(expression, loggerFactory);
 			return config.CreateMapper();
 		}).As<IMapper>().InstancePerLifetimeScope();
-	}
-
-	public static void EnsureDatabaseCreated(IServiceProvider serviceProvider)
-	{
-		using IServiceScope scope = serviceProvider.CreateScope();
-		IServiceProvider services = scope.ServiceProvider;
-
-		AppDbContext context = services.GetRequiredService<AppDbContext>();
-		context.Database.EnsureCreated();
-
-		AppIdentityDbContext identityContext = services.GetRequiredService<AppIdentityDbContext>();
-		identityContext.Database.EnsureCreated();
 	}
 }
