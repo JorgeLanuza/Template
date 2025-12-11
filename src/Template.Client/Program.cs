@@ -15,8 +15,7 @@ WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile(configFilePath, optional: false, reloadOnChange: true);
 
-builder.Services.AddRazorComponents()
-	.AddInteractiveServerComponents();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
 builder.Services.AddClientServices();

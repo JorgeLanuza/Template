@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.Components.Authorization;
+
 using Template.Client.Features.Auth.Services;
 using Template.Client.Features.Auth.Services.Interfaces;
 using Template.Client.Features.Auth.State;
 using Template.Client.State;
-using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Template.Client.Extensions;
 

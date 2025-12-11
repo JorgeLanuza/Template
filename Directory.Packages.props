@@ -19,18 +19,18 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.1" />
-    <PackageVersion Include="BaseCore.Framework.Domain" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.Infrastructure" Version="1.0.2" />
+    <PackageVersion Include="BaseCore.Framework.Domain" Version="1.0.3" />
+    <PackageVersion Include="BaseCore.Framework.Infrastructure" Version="1.0.3" />
     <PackageVersion Include="BaseCore.Framework.Application" Version="1.0.0" />
-    <PackageVersion Include="BaseCore.Framework.Web" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.IdentityServer" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.Security.Identity" Version="1.0.2" />
+    <PackageVersion Include="BaseCore.Framework.Web" Version="1.0.3" />
+    <PackageVersion Include="BaseCore.Framework.IdentityServer" Version="1.0.3" />
+    <PackageVersion Include="BaseCore.Framework.Security.Identity" Version="1.0.3" />
     <PackageVersion Include="BaseCore.Framework.Security.DataAccess" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.Security.Business" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.SecurityIdentityClient" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.Observability" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.DependencyInjection" Version="1.0.2" />
-    <PackageVersion Include="BaseCore.Framework.Configuration" Version="1.0.2" />
+    <PackageVersion Include="BaseCore.Framework.Security.Business" Version="1.0.3" />
+    <PackageVersion Include="BaseCore.Framework.SecurityIdentityClient" Version="1.0.3" />
+    <PackageVersion Include="BaseCore.Framework.Observability" Version="1.0.3" />
+    <PackageVersion Include="BaseCore.Framework.DependencyInjection" Version="1.0.3" />
+    <PackageVersion Include="BaseCore.Framework.Configuration" Version="1.0.3" />
     <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageVersion Include="NLog.Web.AspNetCore" Version="6.1.0" />
     <PackageVersion Include="OpenIddict.EntityFrameworkCore" Version="7.2.0" />

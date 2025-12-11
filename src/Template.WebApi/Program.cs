@@ -1,14 +1,17 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 
-using BaseCore.Framework.IdentityServer.Configuration;
 using BaseCore.Framework.Security.Identity;
 using BaseCore.Framework.Web.Middlewares;
+using BaseCore.Framework.Security.Identity.Entities;
+using Microsoft.AspNetCore.Identity;
 
 using Scalar.AspNetCore;
 
 using Template.Application;
 using Template.DependencyInjection.Container;
+using Template.Infrastructure.Data;
+
 using AppIdentityDbContext = Template.Infrastructure.Context.AppIdentityDbContext;
 
 string configFilePath = "Configuration/BaseCore.ApplicationSettings.json";
@@ -26,8 +29,6 @@ builder.Services.AddApplicationLayer();
 // Registra Servicios de IoC (DbContext, Repositories)
 Template.IoC.DependencyInjection.RegisterServices(builder.Services, builder.Configuration);
 
-// ... Autofac config follows ...
-
 // Configurar Autofac
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
@@ -36,21 +37,18 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 	templateBuilder.RegisterModule();
 });
 
-// Configurar Identity Server (Self-Hosted)
+builder.Services.AddIdentityCore<BaseUser>().AddRoles<BaseRole>().AddEntityFrameworkStores<AppIdentityDbContext>().AddSignInManager().AddDefaultTokenProviders();
+
 builder.Services.AddBaseCoreIdentityServer<AppIdentityDbContext>(options =>
 {
-    // Configure OpenIddict to use EF Core
-    var coreBuilder = (OpenIddictCoreBuilder)options;
-    coreBuilder.UseEntityFrameworkCore()
-               .UseDbContext<AppIdentityDbContext>();
+	OpenIddictCoreBuilder coreBuilder = (OpenIddictCoreBuilder)options;
+	coreBuilder.UseEntityFrameworkCore().UseDbContext<AppIdentityDbContext>();
 });
 
-// Habilitar Validación de Tokens (Local) - Resource Server
 builder.Services.AddBaseCoreIdentityValidation();
 
 WebApplication app = builder.Build();
 
-// Configurar el pipeline de solicitudes HTTP
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapOpenApi();
@@ -63,8 +61,8 @@ app.MapControllers();
 app.UseAuthorization();
 app.MapControllers();
 
-// Initialize Database and Seed Data
-Template.Infrastructure.Data.DbInitializer.EnsureDatabaseCreated(app.Services);
-await Template.Infrastructure.Data.DbInitializer.SeedOpenIddictClientsAsync(app.Services, app.Configuration);
+DbInitializer.EnsureDatabaseCreated(app.Services);
+
+await DbInitializer.SeedOpenIddictClientsAsync(app.Services, app.Configuration);
 
 await app.RunAsync();

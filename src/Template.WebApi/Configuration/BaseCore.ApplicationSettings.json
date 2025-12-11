@@ -19,14 +19,14 @@
 		{
 			"Name": "ATZConnection",
 			"Provider": "SQLServerProvider",
-			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
+			"EncodedString": "Server=.;Database=Template.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
 			"Default": "true",
 			"Decoded": "true"
 		},
 		{
 			"Name": "ATHConnection",
 			"Provider": "SQLServerProvider",
-			"EncodedString": "Server=.;Database=Template.Auth.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
+			"EncodedString": "Server=.;Database=Template.Db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
 			"Default": "true",
 			"Decoded": "true"
 		}

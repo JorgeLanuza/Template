@@ -85,4 +85,11 @@ public class AuthService(HttpClient httpClient, IJSRuntime jsRuntime, Authentica
 		return response.IsSuccessStatusCode;
 	}
 
+	public async Task<bool> ForgotPasswordAsync(string email)
+	{
+		var request = new { Email = email };
+		HttpResponseMessage response = await _httpClient.PostAsJsonAsync("api/auth/forgot-password", request);
+
+		return response.IsSuccessStatusCode;
+	}
 }

@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BaseCore.Framework.Security.DataAccess" />
+
     <PackageReference Include="BaseCore.Framework.Web" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="OpenIddict.Core" />
