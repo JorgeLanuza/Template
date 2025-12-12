@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 
+using Template.Client.Features.Admin.Services;
+using Template.Client.Features.Admin.State;
 using Template.Client.Features.Auth.Services;
 using Template.Client.Features.Auth.Services.Interfaces;
 using Template.Client.Features.Auth.State;
@@ -24,6 +26,7 @@ public static class ServiceCollectionExtensions
 
 			// Inicializa aquí los Reducers de tus Features
 			AuthReducers.Initialize(store);
+			AdminReducers.Initialize(store);
 
 			return store;
 		});
@@ -37,6 +40,8 @@ public static class ServiceCollectionExtensions
 		services.AddAuthorizationCore();
 		services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 		services.AddScoped<IAuthService, AuthService>();
+		services.AddScoped<IAuthService, AuthService>();
+		services.AddScoped<IAdminService, AdminService>();
 
 		return services;
 	}

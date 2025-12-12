@@ -14,6 +14,8 @@
     <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.1\contentFiles\any\net10.0\Configuration\BaseCore.ApplicationSettings.json" />
     <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.1\contentFiles\any\net10.0\Configuration\NLog.config" />
     <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.1\contentFiles\any\net10.0\Configuration\TrackerLoggerSettings.json" />
+    <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.3\contentFiles\any\net10.0\Configuration\BaseCore.ApplicationSettings.json" />
+    <Content Remove="C:\Users\jorge\.nuget\packages\basecore.framework.identityserver\1.0.3\contentFiles\any\net10.0\Configuration\NLog.config" />
   </ItemGroup>
 
   <ItemGroup>

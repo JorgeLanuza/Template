@@ -1,0 +1,81 @@
+﻿@page "/admin/dashboard"
+@using MudBlazor
+
+<PageTitle>Security Dashboard</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-4"><b>Security Dashboard</b></MudText>
+
+    @if (_state.IsLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+
+    @* KPIs Row *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 d-flex align-center justify-space-between mud-width-full glass-panel">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Users</MudText>
+                    <MudText Typo="Typo.h4">@_state.TotalUsers</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Color="Color.Primary" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 d-flex align-center justify-space-between mud-width-full glass-panel">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Success">Active Sessions</MudText>
+                    <MudText Typo="Typo.h4">@_state.ActiveSessions</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Wifi" Size="Size.Large" Color="Color.Success" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 d-flex align-center justify-space-between mud-width-full glass-panel">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Error">Locked Users</MudText>
+                    <MudText Typo="Typo.h4">@_state.LockedUsers</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Error" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 d-flex align-center justify-space-between mud-width-full glass-panel">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Warning">Recent Errors (24h)</MudText>
+                    <MudText Typo="Typo.h4">@_state.RecentErrors</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Warning" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* Charts & Feed Row *@
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-4 glass-panel" Style="height: 400px;">
+                <MudText Typo="Typo.h6" Class="mb-2">Session Activity Trend</MudText>
+                <MudChart ChartType="ChartType.Line" ChartSeries="@series" XAxisLabels="@xAxisLabels" Width="100%" Height="320px" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 glass-panel" Style="height: 400px; overflow-y: auto;">
+                <MudText Typo="Typo.h6" Class="mb-2">Live Activity Feed</MudText>
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    @foreach (var activity in activities)
+                    {
+                        <MudTimelineItem Color="@GetActivityColor(activity.Type)" Size="Size.Small">
+                            <ItemOpposite>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@activity.Time</MudText>
+                            </ItemOpposite>
+                            <ItemContent>
+                                <MudText Typo="Typo.body2"><b>@activity.User</b> @activity.Message</MudText>
+                            </ItemContent>
+                        </MudTimelineItem>
+                    }
+                </MudTimeline>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

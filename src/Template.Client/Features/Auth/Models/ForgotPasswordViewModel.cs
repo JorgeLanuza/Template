@@ -1,5 +1,0 @@
-﻿namespace Template.Client.Features.Auth.Models;
-
-public class ForgotPasswordViewModel
-{
-}

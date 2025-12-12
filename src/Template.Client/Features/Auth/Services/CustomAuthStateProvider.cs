@@ -52,9 +52,8 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
 	private static IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
 	{
 		List<Claim> claims = [];
-		string payload = string.Empty;
 
-		string jsonString = string.Empty;
+		string payload;
 
 		try
 		{

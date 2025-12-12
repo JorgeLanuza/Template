@@ -1,0 +1,55 @@
+﻿@using MudBlazor
+@using Template.Client.Features.Admin.Models
+
+<MudDialog Class="mud-dialog-glass">
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudTextField @bind-Value="User.UserName" Label="Username" Required="true" RequiredError="Username is required!" Variant="Variant.Outlined" Class="mb-3 glass-input" />
+            <MudTextField @bind-Value="User.Email" Label="Email" Required="true" RequiredError="Email is required!" InputType="InputType.Email" Variant="Variant.Outlined" Class="mb-3 glass-input" />
+            
+            <MudSelect T="string" Label="Roles" MultiSelection="true" @bind-SelectedValues="selectedRoles" Variant="Variant.Outlined" Class="mb-3 glass-input">
+                @foreach (var role in AvailableRoles)
+                {
+                    <MudSelectItem T="string" Value="@role">@role</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSwitch @bind-Value="User.IsLocked" Color="Color.Error" Label="Account Locked" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Variant="Variant.Filled" Disabled="@(!success)">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public dynamic DialogInstance { get; set; } = default!;
+
+    [Parameter] public AdminUserModel User { get; set; } = new();
+
+    private MudForm? form;
+
+    private bool success;
+
+    private IEnumerable<string> selectedRoles = new HashSet<string>();
+    
+    // Mock Roles - in real app fetch from Service/State
+    private List<string> AvailableRoles = new List<string> { "SuperAdmin", "Admin", "User", "Manager" };
+
+    protected override void OnInitialized()
+    {
+        if (User.Roles != null)
+        {
+            selectedRoles = new HashSet<string>(User.Roles);
+        }
+    }
+
+    private void Submit()
+    {
+        User.Roles = selectedRoles.ToList();
+        DialogInstance.Close(DialogResult.Ok(User));
+    }
+
+    private void Cancel() => DialogInstance.Cancel();
+}

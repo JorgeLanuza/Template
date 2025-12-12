@@ -1,0 +1,38 @@
+/* Glassmorphism Utilities */
+
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7); /* Fallback / Light mode base */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    transition: all 0.3s ease-in-out;
+}
+
+.glass-panel:hover {
+    box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Dark Mode Adaptation (if body has dark-mode class or via media query preference) */
+@media (prefers-color-scheme: dark) {
+    .glass-panel {
+        background: rgba(30, 30, 30, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Glass Inputs */
+.glass-input .mud-input-control-input-container {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(4px);
+    border-radius: 8px;
+}
+
+/* Dialog Glass */
+.mud-dialog-glass {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}

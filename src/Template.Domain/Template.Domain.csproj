@@ -8,12 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="BaseCore.Framework.Domain" />
+    <PackageReference Include="BaseCore.Framework.Security.Identity" />
   </ItemGroup>
-
   <ItemGroup>
-    <Folder Include="Interfaces\" />
     <Folder Include="Mapping\" />
-    <Folder Include="Services\" />
+    <Folder Include="NewFolder\" />
   </ItemGroup>
 
 </Project>

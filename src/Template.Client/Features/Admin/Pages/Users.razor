@@ -1,0 +1,77 @@
+﻿@page "/admin/users"
+@using MudBlazor
+@using Template.Client.Features.Admin.Models
+
+<PageTitle>User Management</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-4"><b>User Management</b></MudText>
+
+    @if (_state.IsLoading)
+    {
+         <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+
+    <MudDataGrid Items="@_state.Users" Filterable="true" Sortable="true" Groupable="false" Bordered="false" Elevation="0" Class="glass-panel" QuickFilter="@FilterFunc1">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Registered Users</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search by name or email..." Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 glass-input" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => OpenUserDialog(null))" Class="ml-4">New User</MudButton>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.UserName" Title="Username" />
+            <PropertyColumn Property="x => x.Email" Title="Email" />
+            
+            <TemplateColumn Title="Roles">
+                <CellTemplate>
+                    @foreach (var role in context.Item.Roles)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@role</MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            
+            <PropertyColumn Property="x => x.LastActive" Title="Last Active" Format="g" />
+            <PropertyColumn Property="x => x.LastIp" Title="Last IP" />
+            
+            <TemplateColumn Title="Status">
+                 <CellTemplate>
+                    @if (context.Item.IsLocked)
+                    {
+                         <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Lock">Locked</MudChip>
+                    }
+                    else
+                    {
+                         <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle">Active</MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Actions" StickyRight="true">
+                <CellTemplate>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => OpenUserDialog(context.Item))" />
+                    
+                    @if (context.Item.IsLocked)
+                    {
+                        <MudTooltip Text="Unlock User">
+                            <MudIconButton Icon="@Icons.Material.Filled.LockOpen" Size="Size.Small" Color="Color.Warning" OnClick="@(() => UnlockUser(context.Item))" />
+                        </MudTooltip>
+                    }
+                    
+                    <MudTooltip Text="Reset Password">
+                        <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" Size="Size.Small" Color="Color.Secondary" OnClick="@(() => ResetPassword(context.Item))" />
+                    </MudTooltip>
+
+                    <MudTooltip Text="PANIC: Revoke Sessions">
+                         <MudIconButton Icon="@Icons.Material.Filled.PhonelinkErase" Size="Size.Small" Color="Color.Error" OnClick="@(() => RevokeSession(context.Item))" />
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="AdminUserModel" />
+        </PagerContent>
+    </MudDataGrid>
+</MudContainer>

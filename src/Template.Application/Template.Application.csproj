@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Template.Domain\Template.Domain.csproj" />
     <PackageReference Include="BaseCore.Framework.Application" />
+    <PackageReference Include="BaseCore.Framework.Security.Business" />
   </ItemGroup>
 
   <ItemGroup>
