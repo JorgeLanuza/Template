@@ -1,104 +1,113 @@
-Presentación Técnica de Framework consumido por la solución: BaseCore.Framework
-- Resumen Ejecutivo
-BaseCore.Framework es un marco de trabajo (framework) corporativo diseñado para .NET 10 enfocado en la construcción de aplicaciones empresariales robustas y auditables. Basado en principios de Arquitectura Limpia (Clean Architecture) y Diseño Orientado al Dominio (DDD) el proyecto centraliza transversalmente todas las necesidades de seguridad, observabilidad y acceso a datos.
+Análisis Arquitectónico y Técnico (Code-Level): BaseCore.Framework
+La siguiente disección técnica analiza el código fuente, los patrones de diseño implementados (Design Patterns), y el comportamiento algorítmico de bajo nivel (Low-Level Design) de los módulos que conforman la solución BaseCore.Framework (.NET 10). Se eliminan las descripciones de alto nivel para centrarse exclusivamente en la implementación.
 
-El proyecto está fragmentado en múltiples módulos (NuGet packages) independientes lo que permite a las aplicaciones adherirse al principio de pay-for-play (instalar solo lo que se necesita).
+1. Patrón Result y Entidades Base (BaseCore.Framework.Domain)
+Implementación Técnica: El dominio impone el uso estricto del patrón Result Wrapper para aislar el flujo de control del throw Exception nativo del CLR de .NET. Esto previene el Stack Unwinding, una operación altamente costosa a nivel de CPU.
 
-- Arquitectura y Módulos Principales
-A continuación se detalla cada uno de los seis pilares principales del framework y cómo implementar lógicamente cada funcionalidad para obtener los resultados esperados.
+IBaseCoreService<TDto, TId>: Todo servicio de la capa Application debe implementar este contrato genérico. La interfaz expone métodos sobrecargados de GetAll que aceptan predicados dinámicos a través de Dictionary<string, object> y ordenamiento complejo usando List<BaseCoreSortingParameterModel>.
+Encapsulación de Retorno: Métodos mutadores (
+Add
+, Update) no retornan el DTO o void, sino que están forzados a retornar BaseCoreServiceResult<TDto, TId>. Esta clase encapsula tres estados: la respuesta genérica (ResultObject), metadatos transaccionales y el estado del motor FluentValidation (mediante un nodo Validation con sus respectivos Errors).
+Inyección de Correlación (
+BaseCoreAuditEvent
+): Los servicios intermedios permiten inyectar el evento TrackLoggerParentEvent proveniente de la capa web. Esto asegura que la traza jerárquica padre-hijo se mantenga estructurada para la posterior ingesta asíncrona hacia loggers o la propia BBDD por la infraestructura.
+Ventajas Técnicas (Pro/Contra):
 
-1. BaseCore.Framework.Domain
-Contiene las interfaces fundamentales y entidades base del DDD como BaseCoreDto clases de ordenamiento (SortingParameterModel), paginación y el corazón de la lógica de negocio: BaseCoreService<TDto, TEntity, TId>. Este servicio genérico expone e implementa un patrón estandarizado para operaciones CRUD (Create, Read, Update, Delete) integrando de forma automatizada trazabilidad, auditoría, paginado, filtrado y validación de entidades.
+(Pro): Evita las First Chance Exceptions en el CLR, permitiendo escalar el servidor IIS/Kestrel a miles de RPS sin penalización de CPU por capturas de pila fallidas.
+(Contra): Todo cliente HTTP que consuma los SDKs generados debe deconstruir forzosamente el objeto Result, incrementando la verbosidad de los clientes.
+2. Abstracción EF Core y Triggers Dinámicos (BaseCore.Framework.Infrastructure)
+Implementación Técnica: La capa de infraestructura envuelve Microsoft.EntityFrameworkCore y utiliza Metadatos (Reflection) para inyectar scripts T-SQL puros (System.Data.Common.DbCommand) directamente al motor SQL Server al momento del arranque.
 
- Cómo implementarlo lógicamente:
+Inyección en caliente (
+BaseCoreContextExtensions
+): El método de extensión ConfigureDataBase<TContext>(this TContext context) se ejecuta asíncronamente en el inyector del 
+Startup
+. Localiza todos los DbSet declarados por reflection: typeof(TContext).GetProperties().Where(x => x.PropertyType.Name.StartsWith("DbSet")).
+Trampas SQL Anidadas: Por cada tabla, el framework abre una conexión ADO.NET (DbConnection) y lanza queries sobre INFORMATION_SCHEMA.TABLE_CONSTRAINTS para descubrir autodinámicamente la llave primaria (primaryKeyColumn). Luego, emite un comando CREATE TRIGGER trAfterUpd{tableName} ON {tableName} AFTER INSERT, UPDATE que forza a nivel de hardware la ejecución de SET LogTimeStamp = GETUTCDATE().
+Integración Audit.NET: El repositorio primario intercepta la virtualización del comando SaveChanges(). Mediante el motor de Audit.NET, genera deltas comparativos de la entidad EF (pre y post-estado modificado), lo serializa a JSON y lo anida en la colección secundaria para generar un registro no repudiable de cambios de filas.
+Ventajas Técnicas (Pro/Contra):
 
- 1: Crea tu DTO heredando de BaseCoreDto<TId>.
- 2: Crea tu entidad de base de datos (por ejemplo UserEntity).
- 3: Crea tu servicio de negocio heredando de BaseCoreService<TuDto, TuEntidad, TuId>. El constructor te pedirá inyectar las dependencias base (IBaseCoreLogger, BaseCoreRepository, IMapper y un validador genérico).
- Resultado: Cuentas inmediatamente con métodos como TuServicio.GetAll(), TuServicio.Add(dto), TuServicio.Update(dto), y TuServicio.Delete(id). Todos retornarán un objeto encapsulado genérico BaseCoreServiceResult o BaseCoreCollectionServiceResult con la propiedad Validation (información de si es válido o no) y el objeto devuelto, registrando automáticamente la pista de auditoría.
-2. BaseCore.Framework.Infrastructure
-Implementa el acceso a base de datos mediante Entity Framework Core. Una de sus características más potentes y peculiares es BaseCoreContextExtensions el cual inyecta dinámicamente comandos SQL Server en tiempo de ejecución para crear Triggers (Disparadores) Automáticos (trAfterUpd[Tabla]) en las tablas. Esto asegura de forma inquebrantable a nivel de base de datos que la columna LogTimeStamp se actualice en las operaciones INSERT y UPDATE.
+(Pro): Ni un DBA conectado por SSMS podría hacer operaciones UPDATE LogTimeStamp personalizadas sin que el motor dispare el trigger y sobreescriba su marca con el reloj atómico del disco.
+(Contra): Altísima latencia transaccional durante los bulk inserts (inserciones masivas), dado que el Trigger SQL procesa un contexto transitorio interponiendo un lock físico de la tabla por cada registro ingresado.
+3. Criptosistema Híbrido Asimétrico/Simétrico (BaseCore.Framework.Cryptography)
+Implementación Técnica: La clase de orquestación 
+EncryptorManager
+ administra un motor dual para evitar almacenar secretos en texto planto y validar que los mensajes transitando entre microservicios no hayan sufrido Man-In-The-Middle (MitM). Requiere System.Security.Cryptography.X509Certificates.
 
- Cómo implementarlo lógicamente:
+Proceso de Encriptación (
+GenerateEncodedString
+): Recupera del Trusted Store un X509Certificate2. Usa el helper local AesPasswordGenerator para sembrar un array pseudo-aleatorio atado al tiempo del procesador creando una clave volátil de 50 caracteres (llave AES de un solo uso). Mediante encriptación simétrica AES, codifica el Payload (ej. String de base de datos) usando dicha llave. Luego usa la clase nativa RSA.Encrypt() extrayendo la clave matemática pública del certificado sobreescribiendo en bytes encriptados la llave de 50 caracteres AES.
+Payload Concatenado: Genera un solo stream de salida uniendo el array del RSA (llave protegida) + un separador estricto (Encoding.UTF8.GetBytes("|||")) + el array AES cifrado del payload, codificando el flujo completo final en Convert.ToBase64String.
+Firmas Digitales Hash (
+GenerateSignatureString
+): Recibe el payload enrutado, invoca al hardware (certificate!.GetRSAPrivateKey()) y aplica un Hash SHA-512 rellenado criptográfico seguro firmando el paquete (rsa.SignData(..., HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1)).
+Ventajas Técnicas (Pro/Contra):
 
- 1: Configura tu clase de contexto de Base de Datos que herede de DbContext (Entity Framework).
- 2: Define todos tus DbSet<TuEntidad> dentro del contexto. Asegúrate de que tus entidades contengan la columna/propiedad LogTimeStamp.
- 3: En el método de arranque de la aplicación o al finalizar la migración de la base de datos, llama al método de extensión provisto por el framework: context.ConfigureDataBase(); (el cual internamente invocará a SeedTriggersSqlServer()).
- Resultado: El framework evaluará cada colección DbSet usando reflexion, inspeccionará SQL Server para localizar la clave primaria (Primary Key) y automáticamente ejecutará un script CREATE TRIGGER si la tabla cuenta con el campo LogTimeStamp. Tus entidades guardarán la fecha exacta de modificación impidiendo que se falseé dicha fecha a nivel de código.
-3. BaseCore.Framework.Observability (Auditoría y Trazabilidad)
- Un ecosistema completo de diagnóstico y registro encabezado por BaseCoreAuditEvent
-. Registra con gran detalle cada operación del sistema: nombre de la clase, método llamador (CallerMethodName), capa arquitectónica, dirección IP, identificadores de sesión, duraciones (inicio/fin) e incluso interacciones Front-End. Mediante la clase TracingUtil y la librería Audit.NET, todos los parámetros de entrada y salida son rastreados.
+(Pro): Resistencia absouta al vector de ataque por exfiltración. Si se obtienen los AppSettings, sin el certificado PFX exportable alojado en la RAM física del servidor origen o el clúster TPM contenedor, las cadenas son chatarra.
+(Contra): Rotar (renovar) certificados caducos exige ineludiblemente herramientas de recifrado de configuraciones antes de desplegar nodos nuevos.
+4. Gestor Global de Excepciones Forense (BaseCore.Framework.ExceptionManager)
+Implementación Técnica: Constituye el "crash-handler" más atómico del conjunto, heredando la clase universal abstracta de C# pero imponiendo reglas para desenredar fallos fatales absorbiendo el entorno volátil originador.
 
- Cómo implementarlo lógicamente:
-
-La magia automática: Si estás usando una clase derivada de BaseCoreService el registro lo hace por ti. Cada invocación a un CRUD envuelve la ejecución en un bloque using (new TracingUtil...) y CreateAuditScope().
-Para métodos personalizados: Si creas un método de negocio personalizado en tu servicio o controlador, solo necesitas instanciar el log:
-csharp
-using (new TracingUtil<TuClase>("N/A", traceLogger, new object[] { param1, param2 }, "NombreDelMetodo"))
-{ 
-    // Tu lógica aquí 
-}
-Crear el rastro hijo-padre: Para que los eventos de trazabilidad del repositorio DB se agrupen debajo de una llamada principal (ejemplo: del Controlador Web) inyecta y asocia tu BaseCoreAuditEvent actual a la propiedad TrackLoggerParentEvent de la clase BaseCoreService.
-Resultado: Sin escribir configuraciones SQL ni prints en la consola, se recolectan automáticamente en JSON o tu visor de logs las duraciones de los métodos, las llamadas anidadas y los argumentos pasados a la función.
-4. BaseCore.Framework.Cryptography (Seguridad y Cifrado)
-Un módulo especializado que implementa el contrato IEncryptor:
-
-Simétrico (AES-128 CBC): Con derivación de clave a través de Rfc2898DeriveBytes requiriendo 310,000 ciclos de iteración (PBKDF2).
-Asimétrico (RSA): Uso completo de Certificados X509 (X509Certificate2).
- Cómo implementarlo lógicamente:
-
-Paso 1: Inyecta (usando DI) la interfaz genérica IEncryptor en tu clase constructora (El contenedor IoC deberá tener registrado a Encryptor).
-Cifrado Simétrico (Contraseñas): Usa _encryptor.EncryptAES("TuTextoSecreto", "TuPasswordSalt"); y para descifrar usa DecryptAES. Usa un Salt constante y oculto por aplicación y el ID del usuario como contraseña secundaria para mayor seguridad.
-Cifrado Asimétrico (Certificados): Si vas a firmar o mandar datos sensibles b2b carga un X509Certificate2 del repositorio de tu máquina o path y envíalo a: _encryptor.EncryptUsingPublicKey(certificate, Encoding.UTF8.GetBytes("Data"));. Devuelve un arreglo de bytes fuertemente cifrado.
-Resultado: Cifrado militar/bancario implementado con menos de tres líneas de código protegido contra diccionarios y fuerza bruta merced de las más de 300 mil iteraciones PBKDF2 que ejecuta el framework por defecto.
-5. BaseCore.Framework.ExceptionManager (Manejo de Excepciones)
-Presenta BaseCoreException, una excepción súper vitaminada que recopila proactivamente el estado del entorno cuando ocurre un crash. Captura el MachineName, el nombre del AppDomain, la identidad del hilo (ThreadIdentityName) de forma segura, el usuario de Windows y genera un IdError único de correlación.
-
- Cómo implementarlo lógicamente:
-
-1: Típicamente los desarrolladores atrapan errores haciendo throw new Exception("Error");. En este framework debes atrapar y elevar excepciones relativas a negocio con 
-BaseCoreException
+Identidad Cruzada (
+InitializeEnvironmentInformation
+): Mediante bloques Try/Catch de contención (evitando SecurityException en nodos Linux), recolecta variables de solo-lectura: Environment.MachineName, aisla el proceso del Application Domain (AppDomain.CurrentDomain.FriendlyName), clona la identidad del hilo paralelizado actual HTTP (Thread.CurrentPrincipal.Identity.Name) e intercepta al usuario anfitrión WindowsIdentity.GetCurrent().Name.
+Aplanamiento de Pila (
+LogException()
+): Instancia la clase nativa System.Diagnostics.StackTrace(). A través de un bucle for, recorre todos los stackTrace.FrameCount. Por cada frame extrae el DeclaringType.Name fusionándolos con un 
+StringBuilder
 .
-2: En tus bloques catch (Exception ex) (o middlewares globales de ASP.NET Core) eleva:
-csharp
-throw new BaseCoreException(_logger, "Ha ocurrido un error creando el usuario", ex);
-Resultado: En el instante en que instancias esta excepción, el Logger (que deberás proveer en el argumento) inyectará automáticamente en el formato impreso o en tu ElasticSearch/FileLog un bloque trazado con el IdError, Clase Recursiva, Nombre del Dominio e Identidad del PC. Podrás decirle a tu usuario final: "Ocurrió un error. Comúniquese con el administrador mencionando el código: [20260303-1A2B]" y buscar ese mismo código directo en los logs.
-6. BaseCore.Framework.Configuration (Gestión de Opciones)
-Centraliza toda la configuración tipada de la aplicación (
-BaseCoreApplicationSettings
-). Gestiona URLs de servidores de identidad, cadenas de conexión múltiples, ajustes de TrackLogger, diagnóstico, certificados pre-cargados y variables codificadas propias.
+Zero-Allocation String Building: Optimizado masivamente en .NET 10 mediante StringBuilder.AppendInterpolatedStringHandler, permitiendo empalmar texto forense sin generar alojamientos de montones adicionales explícitos (allocations) evadiendo picos del recolector de basura (Garbage Collector) en momentos en el que el servidor está a punto de un StackOverflow o un Out Of Memory.
+Ventajas Técnicas (Pro/Contra):
 
-Cómo implementarlo lógicamente:
+(Pro): Entrega a la plataforma Elastic/Logstash el StackTrace real no solo del error, sino formateado explícitamente y empaquetado con el estado exacto procesal sin usar plugins pesados como Serilog Enrichers.
+(Contra): Alto uso de Reflexión y lectura de Pila (StackTrace) nativa en instante de colisión, lo que incrementa el consumo de los Ms exactos del Crash por unos nanosegundos adicionales.
+5. Orquestador de Observabilidad Audit.Net y NLog (BaseCore.Framework.Observability)
+Implementación Técnica: Módulo middleware que se ubica entre las API internas y el proveedor de recolección de archivos y bases de datos. Construido sobre NLog y Audit.Core.
 
-Paso 1: En tu archivo de configuración de .NET (appsettings.json), crea una sección que se alinee con las propiedades del modelo 
-BaseCoreApplicationSettings
- (Ej.: ApplicationName, ConnectionStrings, IdentityServerUrl).
-Paso 2: Al momento de inicializar los servicios (Program.cs o Startup.cs), usa el motor nativo de .NET para "bindear" la sección JSON directamente a la clase. Es recomendable inyectarlo como un IOptions<BaseCoreApplicationSettings> de forma global.
-Resultado: A través de la interfaz IBaseCoreApplicationSettings, cualquier servicio en tu aplicación podrá acceder fuertemente tipado (sin "Magic Strings" estáticos) al string de conexión, al endpoint de Oauth2 o saber si la aplicación tiene banderas de "DiagnosticsEnabled" en tiempo real.
+Jerarquía de Contextos (
+BaseCoreAuditEvent.cs
+): Modela el ciclo del loggeador instanciando diccionarios de correlación: ChildEvents = new Dictionary<int, BaseCoreAuditEvent>();. Su constructor auto-genera un correlativo único combinando utcNow("yyyyMMddHHmmssfff") y un pseudo-aleatorio new Random().Next(100, 1000).
+Adaptador Log Nativo (Logger.cs : IBaseCoreLogger): Carga el parser XML local 
+Start(string configurationFilePath)
+ para anidar a NLog.LogManager.Configuration.
+Polimorfismo Bidireccional de LogLevel: Dado a que Microsoft.Extensions implementa 
+LogLevel
+ abstractos, este logger posee algoritmos switch explícitos (
+GetNLogLevel
+) adaptando al instante tipos nativos por sus análogos en memoria: LogLevel.Information ==> Priority.Info, lo que encapsula NLog impidiendo dependencias cruzadas en 
+Presentation
+.
+6. Ecosistema de Seguridad Identitaria OIDC (BaseCore.Framework.Security.*)
+Implementación Técnica: Estos cuatro ensamblados forman una solución Single Sign-On (SSO) de delegación de credenciales distribuidas construida fundamentalmente sobre OpenIddict.Server.AspNetCore.
 
-- Casos de Uso Ideales
-Sistemas Financieros, Bancarios o FinTech: El framework brilla en entornos donde la pista de auditoría es material de vida o muerte legal. Los Triggers SQL duros junto con BaseCoreAuditEvent rastreando cada parámetro modificado, validan este punto.
+Security.Identity (Base de Datos Identidades): Implementación especializada de Entity Framework (
+BaseCoreIdentityDbContext
+) que obliga, bajo el método sobrescrito 
+OnModelCreating
+, a encapsular llamadas .ToTable("ARQ_SEC_USERS"). Añade DbSet relacionales pesadas impuestas por su Security.Business:
+UserOldPasswords: Auditoría física forzada (Anti-Rotación pasiva).
+SessionPolicies / 
+UserSessionEntity
+: Previene ataques de replicación de Token obligando chequeos (HeartBeat) sobre LastHeartbeat e IpAddress. Al cambiar abruptamente, invalida el SecurityToken y revoca el pipeline en red bloqueando Session Hijacking.
+IdentityServer (Startup Pipeline): Instanciación limpia en el inyector IoC: Inicia un contexto general (AddDbContext), invoca la lógica paralela genérica 
+AddEnterpriseSecurity
+, y por último anexa sobre el host services.AddBaseCoreIdentityServer<AppIdentityDbContext>(coreBuilderObj => { coreBuilder.UseEntityFrameworkCore().UseDbContext<AppIdentityDbContext>(); }). Este es el emisor final que crea los flujos RSA JWT que consumirán los clientes.
+SecurityIdentityClient (Delegate Consumer): Un cliente desacoplado (Relying Party). Permite que cualquier microservicio externo anexe la dll para poder comprobar firmas JSON Web Tokens (Públicas), descifrar la clave AES y conectarse bajo REST al control delegativo en el Server Controllers/SessionController.cs forzando deslogueos transversales de clústeres de servidores desde el host principal.
+7. Middleware Interceptor HTTP y Embudo Transaccional (BaseCore.Framework.Web)
+Implementación Técnica: Front-end físico de back-end. El pipeline ASP.NET. Construido usando patrones de localización pasiva de servicios e invalidación masiva controlada de flujos en la respuesta HTTP saliente.
 
-Sistemas Altamente Regulados (Ej. Salud - HIPAA o ERPs Corporativos): Sistemas que deben probar de dónde y cuándo provino una modificación. El hecho de que cada llamada a API esté automatizada bajo su propio 
-AuditScope y los metadatos de identidad (IP, Identidad de Windows/Hilos) se incrusten en BaseCoreExceptionb hace ideal este framework en auditorías.
+El BaseController y Patrón Service Locator: Para evitar la Inyección de Constructores Pesada (Donde un Programador añadiría docenas de dependencias solo a un controlador base), expone un localizador diferido y seguro: protected IMapper Mapper => _mapper ??= HttpContext.RequestServices.GetRequiredService<IMapper>();. Esto invoca el ensamblado de mapas (AutoMapper) únicamente en tiempo de ejecución (JIT) la primera vez que se solicita el Parse de DTOs, descargando uso de memoria efímera al controlador durante la recepción del stream HTTP inicial.
+Embudo ResultObject (
+CreateResponse
+): Recibe desde Application un BaseCoreServiceResult. Automáticamente testea la condición flag .Validation.IsValid. Si resulta falso en los dominios profundos, fuerza nativamente sobre-escritura en red HTTP regresando genérico BadRequest(result.Validation) y si es verdadero sin payload retorna un HTTP 204 NoContent(). La estandarización API forzada.
+ExceptionMiddleware Catch-All: Implementación nativa que intercepta al RequestDelegate _next(httpContext) bajo delegados Try/Catch envolventes C#. Si el árbol entero estalla con expeciones irreconocidas o genéricas nativas (Null Reference, Invalid Operation), se incauta el flujo de salida y se reescribe de urgencia el contexto HTTP instanciando un tipo anónimo en anonimato (Type-Erased): var errorResponse = new { ResultObject = (object?)null, Validation = new { IsValid = false, Errors = new[] { new { ErrorMessage = exception.Message } } } };. La instancia anterior se vuelca de facto sobre la tubería de salida context.Response.WriteAsync(json) tapando silenciosamente el colapso subyacente impidiéndole cruzar los cortafuegos WAF perimetrales al no poder enviar huellas forenses StackTrace de memoria y bases de código, devolviendo código HTTP 500 pre-estructurado como el de 
+CreateResponse
+. En paralelo y antes del volcamiento json, detona la escritura asíncrona hacia el Logger en máxima escala de criticidad y trazabilidad de identidad (el Módulo ExceptionManager entra en juego recursivo aquí).
+8. Arquitectura y Restricción por Testing (BaseCore.Framework.ArchitectureTest)
+Implementación Técnica: Una medida compilatoria de validación y coerción continua de Top-Level. Creado bajo TestRunner (XUnit) invocando clases estáticas validadoras del Namespace reflexivo (NetArchTest.Rules).
 
-Arquitectura Basadas en Microservicios Gubernamentales: A través de BaseCoreServiceResult permite mantener un estándar inter-departamental idéntico siendo predecible en su consumo para cualquier UI externa o Integrador.
+Aserción Reflexiva Estructural: Las directivas como Types.InAssembly(typeof(Domain.AssemblyReference).Assembly).ShouldNot().HaveDependencyOn("BaseCore.Framework.Infrastructure") aplican Pattern Matching en los metadatos compilados del dll. No validan algoritmos, validan el Árbol de Importación de las Clases y el compilador (using imports...).
+Mecanismo coercitivo de Integración CI/CD: Debido a que los procesos estándar de DevOps (ej: Github Actions, Azure Pipelines) incluyen en su pipeline los pasos dotnet restore -> dotnet build -> dotnet test, si un desarrollador por desconocimiento acopla las dependencias inyectando algo del ensamblado FrontEnd o EF Core al código puro anémico de DDD, este módulo lanzará un Assert.Fail deteniendo implacablemente el build automático y rechazando el Push o el Merge Request (MR). Establece código inquebrantable no suceptible a excepciones humanas.
 
-- Fortalezas (Puntos a favor)
-Auditoría Implacable e Inevitable: Es casi imposible para un desarrollador olvidar crear logs o rastrear un cambio de entidad; 
-BaseCoreService los genera implícitamente mediante using (new TracingUtil...) y Entity Framework automáticamente añade los Triggers SQL. El seguimiento de auditoría está protegido contra errores humanos.
-Tiempos de Resolución de Errores (MTTR) Mínimos: 
-BaseCoreException escanea detalladamente el StackTrace extrayendo el método, clase y tipo anidado que falló y le estampa un IdError UUID, lo enviará directo a los Loggers para que el equipo de DevOps encuentre el bug sin esfuerzo.
-Robusta Criptografía Core: Sus clases de encriptado no cometen los errores de "novato". Implementan vectores de inicialización (IV) dinámicos combinados con Entropy de 128 Bits, salts integrados a los arrays de salida, e itera la encriptación AES bajo un PBKDF2 extenso.
-Calidad de Código y Privacidad Garantizadas: Reglas estrictas aplicadas al diseño con NetArchTest que aseguran que nadie corrompa la separación de capas a lo largo de los años. Configurado "Privacy by Design" donde el flag de EmbedAllSources=false mitiga la fuga de código fuente, pero reteniendo el "debug" en los Snupkg.
-
-- Debilidades (Áreas de Mejora o "Trade-Offs")
-Agonía de Rendimiento en Alta Frecuencia (Overhead): Cada método en el CRUD (GetAll, Add) de BaseCoreService empaqueta, rastrea con TracingUtil, valida y luego serializa por JSON todo el result set de la capa a la base de datos JsonConvert.SerializeObject(baseCoreCollectionServiceResult.ResultObject). Para cargas voluminosas en sistemas de alto tránsito, esta reflectividad abusiva impactará drástica y negativamente el performance y asignación de CPU/Memory heap (GC).
-Acoso y Fuerte Acoplamiento a Microsoft SQL Server: El diseño de BaseCoreContextExtensions inserta RAW Strings directamente configurados para Dialecto T-SQL (Consultando sys.triggers e INFORMATION_SCHEMA). Aunque tiene un .IsSqlServer() para evitar crashes, si se quisiera portar el proyecto mañana mismo a PostgreSQL (múltiples nubes), dicha funcionalidad espectacular de Triggers se desvanecería o requeriría rehacerse manualmente.
-Algoritmos Asimétricos Ligeramente Deprecados (Padding): En Encryptor.cs RSAEncryptionPadding.Pkcs1 está fijado por defecto. Aunque no está roto para datos heredados la industria actual estándar insta fuertemente el uso de Padding OaepSHA256 o superior debido a vulnerabilidades como Bleichenbacher conocidas en Pkcs1 en ciertas configuraciones.
-
-Generación Constante de Excepciones Lenta: Llamar a Environment.MachineName, AppDomain e iterar el new StackTrace() es una operación muy costosa en el ciclo de vida de .NET. Si una aplicación que consume el framework eleva muchas 
-BaseCoreException (inclusive manejadas por reglas tontas de negocio), afectará el flujo habitual.
-
-BaseCore.Framework es un bloque fundacional y dictatorial. Pre-selecciona todos los aspectos (Logging, Auditoría de BD, DTO Mappers, Encripción y Servicios base) resolviéndolos con madurez corporativa. Está diseñado claramente para priorizar Seguridad y Control Cueste lo que Cueste sobre alto rendimiento asumiendo un enfoque que ama los ecosistemas puramente empresariales dependientes del stack profundo de Microsoft.
-
+Comment
+Ctrl+Alt+M
